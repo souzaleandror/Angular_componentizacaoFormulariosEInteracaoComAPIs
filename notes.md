@@ -727,3 +727,369 @@ Nessa aula, você aprendeu como:
 Criar interface de promoções;
 Criar serviço para lidar com as promoções;
 Interagir com a API para buscar promoções.
+
+#### 01/03/2024
+
+@02-Fomulário controlado
+
+@@02
+Analisando o form de busca
+
+Agora que já começamos a conectar o Jornada Milhas à API e temos as promoções vindas da fonte de dados (back-end), podemos continuar evoluindo. O próximo ponto que vamos atacar é a parte de busca de passagens.
+Analisando o formulário de busca
+A pessoa usuária deverá interagir com um formulário para buscar as passagens. Na nossa aplicação, temos esse formulário com os campos de alternância "Ida e volta" e "Somente ida", da quantidade de pessoas (adultas, crianças ou bebês), e de categoria da passagem (econômica ou executiva). Além disso, temos os campos de origem, destino, e datas da viagem.
+
+Sendo assim, teremos um FormGroup que será compartilhado por vários componentes diferentes. Nesse momento, precisamos tomar a decisão de como fazer isso, de modo que o código fique organizado e não seja necessário passar inputs, ou controles via props, e assim por diante.
+
+Para tomar essa decisão, precisamos entender as possibilidades. Poderíamos ter uma abordagem mais agressiva em relação à gestão de estado e colocar um RxJS ou algo do tipo para controlar o estado global do formulário. Porém, como já aprendemos na aula anterior, quando temos um serviço providedIn: 'root', temos um singleton, isto é, uma instância única do serviço.
+
+Dito isso, podemos usar esse próprio mecanismo do Angular para criar um serviço de controle do formulário, e injetá-lo em todos os componentes que precisarem ter acesso a algum FormControl que estará disponível nesse serviço.
+
+Criando o serviço FormBuscaService
+Já sabemos como criar um serviço usando a ferramenta do Angular CLI, então vamos à prática.
+
+Com o terminal aberto na pasta "jornada-milhas", vamos pedir para o Angular gerar um serviço com os comandos g (ou generate) e s (ou service), mantendo na mesma pasta "core/services/" o arquivo form-busca.service que será criado.
+
+ng g s core/services/form-busca
+COPIAR CÓDIGO
+Executado o comando, vamos acessar o VS Code para verificar se o serviço foi criado corretamente. Poderemos encontrá-lo em "src > app > core > services > form-busca.service.ts".
+
+Formulário de serviço:
+import { Injectable } from '@angular/core';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class FormBuscaService {
+
+  constructor() { }
+}
+COPIAR CÓDIGO
+Podemos começar a construir o formulário com a propriedade formBusca, que será um grupo de controle de formulário. Para isso, existe uma classe do Angular chamada FormGroup.
+
+formBusca: FormGroup;
+COPIAR CÓDIGO
+Ao fazer isso, a importação será feita automaticamente na segunda linha de código:
+
+import { FormGroup } from '@angular/forms';
+COPIAR CÓDIGO
+Agora podemos iniciar o FormGroup dentro do construtor (constructor()). Quando iniciamos e instanciamos a classe, dizemos que this.formBusca recebe um novo FormGroup.
+
+this.formBusca = new FormGroup()
+COPIAR CÓDIGO
+A classe FormGroup espera receber um objeto ({}) contendo vários controles, os quais podemos adicionar à medida que for necessário.
+
+Resultado do arquivo form-busca.service.ts até o momento:
+import { Injectable } from '@angular/core';
+import { FormGroup } from '@angular/forms';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class FormBuscaService {
+
+  formBusca: FormGroup;
+
+  constructor() { 
+
+    this.formBusca = new FormGroup({
+
+    })
+  }
+}
+COPIAR CÓDIGO
+Conclusão
+Nesse momento, temos um serviço que é um singleton, isto é, uma instância única que irá controlar o formulário, e poderemos injetar esse serviço em todos os componentes necessários, ou seja, onde for necessário manipular o serviço.
+
+Dessa forma, isolamos a lógica de controle do formulário em uma classe de serviço, e delegamos toda a responsabilidade de definir o estado, controlar, e os métodos comuns a todos os instantes da nossa busca, deixando isso desacoplado dos nossos componentes visuais.
+
+Agora que temos o serviço em mãos, podemos partir para os componentes para começar a criar os controles e guardar os valores de acordo com a interação da pessoa usuária. Vamos fazer isso?
+
+@@03
+Um serviço para a todos governar
+
+Agora que já temos o serviço que irá controlar o formulário de busca e governar o estado, podemos começar a injetá-lo e criar de acordo com nossa necessidade, adicionando os controles de formulário conforme começarmos a manipular os inputs com que a pessoa usuária vai interagir.
+Injetando o serviço no componente formBusca
+Para isso, precisamos encontrar o local do formulário no projeto. Começaremos acessando o arquivo home.component.html, localizado em "pages > home".
+
+Na linha de código 7 desse arquivo, temos a tag <app-form-busca>. Vamos clicar sobre ela com a tecla "Ctrl" (ou "Command", caso utilize o Mac) pressionada. Dessa forma, seremos redirecionados para o componente form-busca.component.ts.
+
+import { Component } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
+import { ModalComponent } from '../modal/modal.component';
+
+@Component({
+  selector: 'app-form-busca',
+  templateUrl: './form-busca.component.html',
+  styleUrls: ['./form-busca.component.scss']
+})
+export class FormBuscaComponent {
+  constructor(public dialog: MatDialog) {}
+
+  openDialog() {
+    this.dialog.open(ModalComponent, {
+      width: '50%'
+    })
+  }
+}
+COPIAR CÓDIGO
+É justamente esse arquivo que irá conter todos os nossos inputs. Para garantir, vamos analisar o HTML desse componente (form-busca.component.html).
+
+Nesse arquivo, encontramos as tags <mat-button-toggle> de "IDA E VOLTA" e "SOMENTE IDA", as tags <mat-label> de "Origem", "Destino", "Data de ida" e "Data da volta", e o botão (<button>) de "BUSCAR".
+
+Sabendo que estamos no lugar certo, no arquivo form-busca.component.ts, além de injetar o MatDialog que controla o modal, vamos injetar de forma privada (private) o formBuscaService. Vamos definir o tipo dele como FormBuscaService, para o Angular injetar o serviço corretamente.
+
+constructor(public dialog: MatDialog, 
+  private formBuscaService : FormBuscaService) {}
+COPIAR CÓDIGO
+Quebramos a linha no constructor(), para deixar o parâmetro public dialog na linha 12 e o private formBuscaService na linha 13.
+Nesse momento, o VS Code fará a importação de FormBuscaService automaticamente:
+
+import { FormBuscaService } from 'src/app/core/services/form-busca.service';
+COPIAR CÓDIGO
+Com o FormBuscaService em mãos, podemos retornar ao primeiro componente do <mat-button-toggle-group> em form-busca.component.html, isto é, o componente "IDA E VOLTA", e criar um controle para esse grupo.
+
+Para fazer isso, vamos retornar ao arquivo de serviço (form-busca.service.ts). Na primeira linha dentro do FormGroup() (linha de código 14), onde ele recebe um objeto de controle, podemos iniciar o controle somenteIda.
+
+Esse controle será um FormControl do Angular, ou seja, faremos o formulário controlado. O FormControl por si só é uma classe, então precisamos adicionar new antes dele.
+
+Em seguida, podemos definir um valor padrão, dizendo que somenteIda é false.
+
+somenteIda: new FormControl()
+COPIAR CÓDIGO
+O VS Code fará a importação automática de FormControl na linha 2:
+
+import { FormControl, FormGroup } from '@angular/forms';
+COPIAR CÓDIGO
+Resultado do arquivo form-busca.service.ts:
+import { Injectable } from '@angular/core';
+import { FormControl, FormGroup } from '@angular/forms';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class FormBuscaService {
+
+  formBusca: FormGroup;
+
+  constructor() { 
+
+    this.formBusca = new FormGroup({
+      somenteIda: new FormControl(false)
+    })
+  }
+}
+COPIAR CÓDIGO
+Conclusão
+Já temos um formulário com a classe FormControl, que estará disponível para nós no FormBusca. Perceba que existe uma delimitação evidente da responsabilidade de cada elemento: o FormBuscaService irá cuidar do formulário e de todos os controles, enquanto o FormBuscaComponent irá apenas usá-lo.
+
+Agora, de alguma forma, precisamos vincular o FormControl ao componente HTML. Sabendo que temos o FormBuscaService, ele fará a ponte para nós, de modo que a interação da pessoa usuária fique armazenada no estado dentro desse serviço.
+
+Abordaremos esse assunto no próximo vídeo. Te vejo lá!
+
+@@04
+TypeScript a nosso favor
+
+Agora que já temos o FormBuscaService disponível no componente FormBuscaComponent, podemos acessar o template no arquivo HTML (form-busca.component.html) para analisar alguns pontos.
+Usando o TypeScript a nosso favor
+Na linha de código 2, temos a tag de formulário <form>. Dentro dela, podemos dizer entre colchetes, usando uma diretiva do Angular, que o formGroup será formBuscaService.formBusca.
+
+<form [formGroup]="formBuscaService.formBusca">
+COPIAR CÓDIGO
+Ao fazer isso, o TypeScript irá nos ajudar em dois sentidos:
+
+Ele já faz o autocomplete, então ele entende o que é formBuscaService e entende que ele tem um formBusca público, ou seja, podemos acessá-lo de fora pela instância;
+E ele indica um erro, dizendo que não conhece a propriedade formGroup.
+Vamos salvar as alterações e avaliar o que o Angular dirá sobre esse erro. Acessaremos o navegador para obter mais informações.
+
+Com o console aberto no DevTools, temos a indicação de que há um erro em FormBuscaComponent: não conhecemos o atributo formGroup de um formulário, então falta alguma informação. Essa informação é justamente um módulo que precisamos registrar.
+
+Então, nosso próximo passo será injetar esse módulo em AppComponent. Para isso, vamos abrir o VS Code e abrir o arquivo app.module.ts. Na lista imports, vamos importar o módulo de formulário reativo do Angular.
+
+ReactiveFormsModule
+COPIAR CÓDIGO
+É esse módulo que vai complementar para nós e permitir que o Angular entenda a diretiva que queremos usar. De volta ao arquivo form-busca.component.html, não teremos mais a indicação de erro em formGroup.
+
+Agora temos a reclamação do seguinte erro: formBuscaService é privado, sendo acessível somente dentro da classe. Dito isso, vamos até o arquivo form-busca.component.ts e alterar de private para public na linha 13.
+
+public formBuscaService : FormBuscaService) {}
+COPIAR CÓDIGO
+Feito isso, o erro será corrigido no arquivo HTML. Dessa forma, o formBuscaService tem o formBusca, e agora o Angular e o TypeScript entendem o que é a diretiva formGroup.
+
+Recapitulando: o que fizemos foi injetar o ReactiveFormsModule na linha 65 do arquivo app.module.ts, no array de módulos importados. Agora estão disponíveis globalmente todos os poderes oferecidos por esse módulo do Angular.
+
+Com o módulo disponível, a próxima etapa é definir no componente de ida e volta o nome do controle que estará vinculado a ele.
+
+No arquivo form-busca.component.html, teremos na linha 5 a tag <mat-button-toggle-group. Ela espera receber uma diretiva chamada formControlName, que será uma string somenteIda.
+
+<mat-button-toggle-group aria-label="Tipo de passagem" formControlName="somenteIda">
+COPIAR CÓDIGO
+Assim, definimos que o controle de formulário para esse elemento é somenteIda. Agora, o FormControl do arquivo form-busca.service.ts está vinculado ao componente.
+
+Vamos fechar todos os arquivos abertos no VS Code, mantendo somente o form-busca.component.html. De volta ao navegador, vamos recarregar a página para garantir que tudo continua funcionando normalmente.
+
+Não temos nenhum erro no console, o que é um bom sinal. Porém, há um detalhe: atualmente, exibimos o ícone de confirmação (✓) nos dois cenários do toggle, tanto no "IDA E VOLTA" quanto no "SOMENTE IDA". De alguma forma, precisamos esconder o ícone se o campo não está selecionado. Vamos fazer isso?
+
+Controlando a exibição do ícone de confirmação
+Retornando ao VS Code, no arquivo HTML que mantivemos aberto, temos a tag <mat-icon> na linha 7, que contém o "check" indicando qual ícone colocamos. Para solucionar o problema, vamos usar a diretiva ngIf, passando para ela a seguinte condição:
+
+Ir até o formBuscaService;
+Pegar o formBusca;
+Usar o método get() para obter um controle pelo nome. Esse nome é somenteIda;
+E pegar o value após somenteIda.
+<mat-button-toggle>
+  <mat-icon *ngIf="!formBuscaService.formBusca.get('somenteIda')?.value">check</mat-icon>
+  IDA E VOLTA
+</mat-button-toggle>
+COPIAR CÓDIGO
+Note que, ao fazer isso, o VS Code adiciona automaticamente o operador nullable, representado por um ponto de interrogação (?). Com isso, indicamos que o value será coletado apenas se o FormControl chamado somenteIda existir dentro do formBusca.
+
+Além disso, adicionamos o sinal de negação (!) após a abertura de aspas duplas, para negar a primeira condição. Assim, se "IDA E VOLTA" for true, será exibido o check no lado esquerdo, correspondente ao campo de ida e volta.
+
+Feito isso, vamos copiar a linha 7 e colar no <mat-button-toggle> de "SOMENTE IDA", porém, removendo o sinal de negação.
+
+<mat-button-toggle>
+  <mat-icon *ngIf="formBuscaService.formBusca.get('somenteIda')?.value">check</mat-icon>
+  SOMENTE IDA
+</mat-button-toggle>
+COPIAR CÓDIGO
+Por último, precisamos definir o valor das tags <mat-button-toggle>, pois no momento, o Angular não sabe o valor quando cada campo está selecionado. Para o campo de "IDA E VOLTA", vamos definir o valor como false. Já para "SOMENTE IDA", o valor será true.
+
+É importante lembrar de remover a opção explícita checked da tag de "IDA E VOLTA", pois não queremos mais dizer qual campo está marcado por padrão. Agora o formulário controla isso.
+<mat-button-toggle [value]="false">
+COPIAR CÓDIGO
+<mat-button-toggle [value]="true">
+COPIAR CÓDIGO
+Dessa forma, o ícone irá aparecer em um campo ou no outro. Agora estamos conectando todas as peças que preparamos até o momento.
+
+Vamos testar? De volta ao navegador, vamos recarregar a página. Ao alternar entre as opções "IDA E VOLTA" e "SOMENTE IDA", o ícone deverá ser exibido de acordo com o campo selecionado.
+
+Conclusão
+Concluímos nossa tarefa e agora o FormControl funciona corretamente, com o FormBuscaService controlando o estado de ida e volta, se é somente ida ou não.
+
+Da mesma forma que controlamos esse estado booleano, podemos expandi-lo aos poucos para os demais campos da busca de passagens. É isso que faremos na sequência, e até o final do curso, iremos evoluir bastante essa busca.
+
+Te vejo no próximo vídeo!
+
+@@05
+Controlando o formulário em um serviço
+
+Durante o desenvolvimento da aplicação "Jornada Milhas", você se depara com o seguinte código:
+import { Injectable } from '@angular/core';
+import { FormControl, FormGroup } from '@angular/forms';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class FormBuscaService {
+
+  formBusca: FormGroup;
+
+  constructor() { 
+    this.formBusca = new FormGroup({
+      somenteIda: new FormControl(false)
+    });
+  }
+}
+COPIAR CÓDIGO
+O time de desenvolvimento optou por criar o serviço acima para controlar o formulário de busca de passagens ao invés de fazer isso diretamente no componente.
+
+Analisando a implementação acima, selecione as alternativas que apresentam as vantagens que justificam o porque o time de desenvolvimento escolheu criar um serviço para lidar com o formulário de busca de passagens aéreas.
+
+Selecione 3 alternativas
+
+Permitir a reutilização do mesmo formulário em vários componentes.
+ 
+O serviço permite que o mesmo formulário possa ser injetado e reutilizado em diferentes componentes, o que economiza tempo e esforço, pois não é necessário duplicar o código do formulário em cada componente que o utiliza.
+Alternativa correta
+Organizar o código de forma mais eficiente e manter o componente focado em sua funcionalidade principal.
+ 
+Ao utilizar um serviço, é possível isolar a lógica relacionada ao formulário em um local separado, tornando o componente mais limpo e direcionado à sua funcionalidade principal, o que facilita a manutenção do código e aumenta a legibilidade.
+Alternativa correta
+Melhorar o desempenho da aplicação, reduzindo o tempo de processamento do formulário.
+ 
+Alternativa correta
+Permitir o compartilhamento do estado do formulário entre diferentes componentes.
+ 
+Ao utilizar um serviço como intermediário, é possível compartilhar o estado do formulário entre diferentes componentes, o que é útil no formulário de busca de passagens aéreas já que ele precisará interagir com diversos componentes.
+
+@@06
+Desafio: Serviço de Unidades Federativas
+
+Chegou a sua hora da aventura, parte 2! Nós já sabemos como criar serviços que obtêm dados da API. Agora, precisamos de um novo serviço que vai buscar os estados brasileiros.
+Essa aventura é ousada, então queria aproveitar esse momento para pensarmos em otimização. Precisamos de uma camada de cache para evitar chamadas desnecessárias à API, porque a lista de unidades federativas não é algo que muda com muita frequência, não é mesmo?
+
+De maneira simples, shareReplay é um operador RxJS que, ao ser combinado com o método pipe, nos permite armazenar em cache o resultado de um Observable. Isso nos permite fazer exatamente o que queremos aqui: evitar requisições HTTP desnecessárias. Uma vez que os dados já foram buscados, eles ficam guardadinhos esperando para serem reutilizados, o que é um salva-vidas quando a ideia é otimizar o desempenho da aplicação.
+
+Agora, se você quiser dar um mergulho ainda mais profundo nessa história toda de shareReplay, dá uma passada na documentação oficial. Lá tem uma galera que sabe das coisas e pode te dar mais detalhes de como isso funciona por debaixo dos panos.
+
+https://rxjs.dev/api/operators/shareReplay
+
+Bora de código? Hora de implementar o nosso serviço, tomando aquele cuidado especial com a camada de cache. Dá uma olhada em como ficou o meu resultado:
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { Observable, shareReplay } from 'rxjs';
+import { environment } from 'src/environments/environment';
+import { UnidadeFederativa } from '../types/type';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class UnidadeFederativaService {
+  private apiUrl: string = environment.apiUrl
+  private cache$?: Observable<UnidadeFederativa[]>;
+
+  constructor(
+    private http: HttpClient
+  ) { 
+  }
+
+  listar() : Observable<UnidadeFederativa[]> {
+    if (!this.cache$) {
+      this.cache$ = this.requestEstados().pipe(
+        shareReplay(1)
+      );
+    }
+
+    return this.cache$;
+  }
+
+  private requestEstados(): Observable<UnidadeFederativa[]> {
+    return this.http.get<UnidadeFederativa[]>(`${this.apiUrl}/estados`);
+  }
+}
+COPIAR CÓDIGO
+Primeiro, os detalhes mais administrativos: a classe UnidadeFederativaService é uma injeção de dependência @Injectable fornecida no escopo 'root', o que quer dizer que ela é instanciada uma única vez durante todo o ciclo de vida do app. O Angular é cheio desses truques Jedi, e lembre-se que temos um “para saber mais” falando exatamente sobre na aula anterior!
+
+https://media.tenor.com/buuh81xjVgEAAAAC/ahsoka-tano.gif
+
+Dentro do nosso serviço, nós temos a variável apiUrl que guarda a URL base da API - sacada diretamente das variáveis de ambiente. Também temos a cache$, uma variável opcional que vai guardar um Observable de um array de UnidadeFederativa.
+
+A mágica começa no método listar(). Quando chamado, ele checa se já existe algo na nossa cache$. Se não tiver nada lá, ele chama o método requestEstados(), que faz uma requisição GET para a rota '/estados' da nossa API. A resposta dessa requisição é então armazenada na cache$ com o uso do operador shareReplay, que faz com que o valor buscado fique guardado para futuras subscrições.
+
+Agora, toda vez que chamarmos listar(), se já tivermos uma resposta armazenada na cache$, ela é retornada direto, evitando uma nova requisição HTTP. Uma maravilha para a performance, como se tivéssemos o próprio Yoda otimizando nosso código!
+
+E é basicamente isso que esse código está fazendo. Lembra que mencionei antes sobre a documentação oficial do RxJS? Vale a pena dar uma olhada lá para entender ainda mais sobre esse operador incrível.
+
+Se tiver mais alguma dúvida, conte comigo. E que a Força esteja com você, sempre! 😉
+
+@@07
+Para saber mais: cache com shareReplay
+
+O operador shareReplay é uma funcionalidade poderosa do RxJS que permite armazenar em cache o resultado de um Observable. Isso é especialmente útil quando lidamos com dados que não mudam com frequência, como a lista de unidades federativas do formulário de busca de passagens aéreas.
+Ao utilizar o shareReplay, podemos evitar chamadas desnecessárias à API. Uma vez que os dados já foram buscados, eles são armazenados em cache e podem ser reutilizados, proporcionando um melhor desempenho e otimização da aplicação.
+
+No contexto do serviço de Unidades Federativas, utilizamos o shareReplay para armazenar a resposta da requisição HTTP feita à rota '/estados'. Quando o método listar() é chamado, é verificado se já existe uma resposta armazenada em cache. Se sim, essa resposta é retornada diretamente, evitando uma nova chamada à API. Caso contrário, é feita a requisição e o resultado é armazenado em cache para futuras requisições.
+
+OshareReplay é uma ferramenta incrível que nos ajuda a melhorar o desempenho das aplicações. Se você quiser saber mais detalhes sobre como ele funciona debaixo dos panos, confira a documentação oficial do shareReplay do RxJS.
+
+https://rxjs.dev/api/index/function/shareReplay
+
+@@08
+O que aprendemos?
+
+Nessa aula, você aprendeu como:
+Criar um serviço para controlar o formulário de busca de passagens aéreas;
+Injetar o serviço de formulário de busca no componente "form-busca";
+Controlar o campo "somenteIda" através do serviço;
+Criar o serviço de busca de estados brasileiros.
