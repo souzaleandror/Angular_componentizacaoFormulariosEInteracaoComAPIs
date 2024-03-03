@@ -7,6 +7,8 @@ ng generate enviromnments
 cd jornada-milhas-api
 npm run start:dev
 ng serve --open
+sudo lsof -i :8080
+kill -9 <PID>
 ```
 
 @01-Serviços e injeção de dependencia 
@@ -1093,3 +1095,597 @@ Criar um serviço para controlar o formulário de busca de passagens aéreas;
 Injetar o serviço de formulário de busca no componente "form-busca";
 Controlar o campo "somenteIda" através do serviço;
 Criar o serviço de busca de estados brasileiros.
+
+
+#### 02/03/2024
+
+@03-Dropdown de origem e destino
+
+@@01
+Projeto da aula anterior
+
+Caso queira revisar o código até aqui ou começar a partir desse ponto, disponibilizamos os códigos realizados na aula anterior, para baixá-lo clique neste link ou veja nosso repositório do Github.
+
+https://github.com/alura-cursos/jornada/archive/refs/heads/aula-2.zip
+
+https://github.com/alura-cursos/jornada/tree/aula-2
+
+@@02
+Preparando a base
+
+Chegou a hora de trabalhar na nossa origem e destino. Já temos o input pré-pronto para digitar livremente os estados no campo de busca.
+Porém, como você pôde conferir no desafio anterior, esses estados (ou Unidades Federativas - UFs) virão da API.
+
+Para conseguir linkar isso, podemos trocar esse componente e, ao invés de utilizar o input normal, utilizar o componente "Autocomplete" do Angular Material:
+
+Página "Components > Autocomplete" da documentação do Angular Material.
+Autocomplete
+Essa página da documentação mostra como o componente funciona, oferecendo a marcação do HTML e o código TypeScript necessários.
+
+No exemplo do componente, temos um input de texto chamado "Number" e, ao clicar nele, uma lista de itens desce do campo — One, Two e Three. Podemos digitar para filtrar as opções e selecionar a opção desejada com base no texto digitado:
+
+input autocomplete de exemplo da documentação do Angular, conforme descrito acima.
+
+Já sabendo que utilizaremos esse input, vamos clicar na aba "API" na barra superior da página. Logo no início, temos a referência API para importar o componente Autocomplete do Angular Material:
+
+import {MatAutocompleteModule} from '@angular/material/autocomplete';
+COPIAR CÓDIGO
+Vamos dar esse primeiro passo no nosso App Module, copiando o código acima e retornando ao VSCode.
+
+Importando o componente
+Podemos fechar todos os arquivos abertos e acessar apenas o app.module.ts por enquanto.
+
+Já temos uma série de imports do Angular Material, e vamos inserir o import do Autocomplete logo abaixo do import do Dialog. Também vamos aproveitar para dar espaços entre as chaves e o nome do componente:
+
+// código omitido
+import { MatDialogModule } from '@angular/material/dialog';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+COPIAR CÓDIGO
+Agora, podemos definir esse componente no array de imports do App Module, inserindo-o abaixo de ReactiveFormsModule:
+
+imports: [
+     BrowserModule,
+    // imports omitidos
+     ReactiveFormsModule,
+     MatAutocompleteModule
+],
+COPIAR CÓDIGO
+Com isso em mãos, podemos começar a utilizar esse componente.
+
+Base de implementação do Autocomplete
+Vamos abrir o arquivo form-busca.component.html. Atualmente, temos dois mat-form-fields com origem e destino:
+
+form-busca.component.html
+<mat-form-field class="input-container" appearance="outline">
+    <mat-label>Origem</mat-label>
+<!-- código omitido --> 
+<mat-form-field class="input-container" appearance="outline">
+    <mat-label>Destino</mat-label>
+<!-- código omitido --> 
+COPIAR CÓDIGO
+Devemos nos atentar a um pequeno detalhe da documentação: para utilizar o Autocomplete, precisamos implementar manualmente a função ngOnInit().
+
+Se vamos utilizar esse componente duas vezes, podemos:
+
+tentar replicar código e reaproveitar a lógica ou
+separá-la num componente reaproveitável.
+A segunda opção é a mais adequada. Assim, centralizamos a lógica num componente de Autocomplete de Unidades Federativas e passamos um para controlar a origem e outro para controlar o destino.
+
+Vamos seguir esse caminho.
+
+No VS Code, abrimos o terminal integrado para pedir para o Angular gerar esse componente. Para isso, digitamos ng g c.
+
+Depois, passamos o caminho para a criação desse componente. Pelo menos por enquanto, utilizaremos esse componente apenas no formulário de busca. Então vamos criá-lo dentro do diretório form-busca, completando esse caminho com a subpasta dropdown-uf:
+
+ng g c shared/form-busca/dropdown-uf
+COPIAR CÓDIGO
+Após executar esse comando, poderemos conferir a nova pasta "dropdown-uf" criada dentro de "form-busca" np Explorador de arquivos do VS Code.
+
+Temos, inclusive, acesso ao arquivo TypeScript, a classe do componente (dropdown-uf.component.ts), e também ao HTML, o template do componente (dropdown-uf.component.html).
+
+Voltando ao arquivo form-busca.component.html, vamos simplesmente comentar o primeiro e o segundo form-field.
+
+Vamos usar o componente que acabamos de criar entre os dois, antes do mat-icon-button. Para isso, abrimos e fechamos a tag <app-dropdown-uf />. Como serão dois, o copiamos logo abaixo:
+
+form-busca.component.html
+<app-dropdown-uf />
+<button mat-icon-button>
+    <mat-icon>sync_alt</mat-icon>
+</button>
+<app-dropdown-uf />
+COPIAR CÓDIGO
+Pronto!
+
+Agora, vamos ao navegador para verificar se esse componente está funcionando na página do JornadaMilhas. Nosso menu de busca de passagens está assim por enquanto:
+
+menu "Passagens" do JornadaMilhas. abaixo dos botões selecionáveis de ida e volta, quantidade e tipo de passagens, temos os inputs de lugar e data. no lugar dos inputs de estado de origem e estado de destino, temos apenas um componente de texto "dropdown-uf works!"
+
+Isso significa que a importação do componente foi bem-sucedida, pois a frase dropdown-uf works! consta no HTML do componente:
+
+dropdown-uf.component.html
+<p>dropdown-uf works!</p>
+COPIAR CÓDIGO
+Agora, precisamos fazer a marcação do HTML. Vamos copiar o código de form-field comentado para usar como base e colar no HTML do dropdown-uf, substituindo o <p>dropdown-uf works!</p>.
+
+Depois, clicamos com o botão direito na área de código e selecionamos "Format Document" para formatar o código. Teremos o seguinte:
+
+dropdown-uf.component.html
+<mat-form-field class="input-container" appearance="outline">
+    <mat-label>Origem</mat-label>
+    <mat-icon matPrefix>
+        flight_takeoff
+    </mat-icon>
+    <input matInput placeholder="Origem">
+    <mat-icon matSuffix>search</mat-icon>
+</mat-form-field>
+COPIAR CÓDIGO
+Temos alguns elementos fixos nesse componente, e que precisaremos mudar. São eles: o label e o placeholder, que trazem o nome "Origem"; o ícone do campo, que traz um avião decolando.
+
+Nós precisamos flexibilizar esse componente para trazer tanto o nome "Origem" quanto "Destino", assim como um ícone de avião decolando no primeiro caso e um avião pousando no segundo.
+
+Ou seja, precisamos receber esses elementos de algum lugar como parâmetros. Podemos usar o próprio input para isso.
+
+No lugar da label "Origem", vamos utilizar a sintaxe de duas chaves para pegar o dado que está no template: {{ label }}.
+
+No lugar de flight_takeoff no ícone, vamos colocar {{ matPrefix }}. Também receberemos o placeholder via input, então o colocamos entre colchetes recebendo apenas "placeholder".
+
+Nosso componente ficará assim:
+
+<mat-form-field class="input-container" appearance="outline">
+    <mat-label>{{ label }}</mat-label>
+    <mat-icon matPrefix>
+        {{ matPrefix }}
+    </mat-icon>
+    <input matInput [placeholder]="placeholder">
+    <mat-icon matSuffix>search</mat-icon>
+</mat-form-field>
+COPIAR CÓDIGO
+Temos marcações em vermelho em label, matPrefix e placeholder, pois eles ainda não existem nesse componente.
+
+Então, como já pensamos como queremos usar esse componente, vamos implementá-lo no arquivo TypeScript.
+
+É hora de começar a construir e configurar os nossos inputs, ou seja, o que receberemos no nosso componente pai.
+
+Vamos lá?
+
+https://material.angular.io/components/autocomplete/overview
+
+@@03
+Recebendo os inputs
+
+Agora que temos nossa base pronta, vamos evoluir e corrigir esses erros que o VS Code apontou.
+Precisamos configurar nossos inputs de label, o prefixo que presenta o ícone a ser exibido, e o próprio placeholder.
+
+Para isso, vamos abrir o arquivo dropdown-uf.component.ts!
+
+Corrigindo os erros da base do input
+Primeiramente, vamos criar nosso @Input dentro da classe DropdownUfComponent. O VS Code sugere importar esse componente do core do Angular, então aceitamos para importar automaticamente.
+
+Esse componente é um decorator. Diremos que ele terá um label, cujo tipo é uma string, resultando em: @Input() label: string.
+
+O VS Code reclamará a label, pois não temos um inicializador para essa propriedade, além de não termos nenhum construtor definindo seu valor.
+
+Então, temos duas saídas:
+
+Podemos dizer que essa propriedade começa com uma string vazia (recebendo ''); ou,
+antes de tipar essa propriedade, forçar a tipagem colocando um ponto de exclamação depois do nome da propriedade (label!), dizendo para o TypeScript que sabemos o que estamos fazendo e que essa label vai existir.
+Você pode escolher a abordagem que preferir. Nesta aula, optaremos pela primeira, menos invasiva, e iniciar label com uma string vazia.
+
+O TypeScript do componente ficará assim:
+
+dropdown-uf.component.ts
+import { Component, Input } from '@angular/core';
+
+@Component({
+  selector: 'app-dropdown-uf',
+  templateUrl: './dropdown-uf.component.html',
+  styleUrls: ['./dropdown-uf.component.scss']
+})
+export class DropdownUfComponent {
+  @Input() label: string = '';
+}
+COPIAR CÓDIGO
+Vamos duplicar essa linha de @Input logo abaixo para conferir outra propriedade para esse componente: o ícone.
+
+Nosso prefixo tem o nome de matPrefix, sendo o ícone do nosso input. Para tornar essa propriedade mais clara, vamos trocar esse nome para iconePrefixo no HTML:
+
+dropdown-uf.component.html
+<mat-form-field class="input-container" appearance="outline">
+    <mat-label>{{ label }}</mat-label>
+    <mat-icon matPrefix>
+        {{ iconePrefixo }}
+    </mat-icon>
+<!-- código omitido --> 
+COPIAR CÓDIGO
+Agora, com esse novo nome, podemos voltar ao arquivo TypeScript e definir essa propriedade. Ela também será uma string, inicializada com uma string vazia:
+
+dropdown-uf.component.ts
+export class DropdownUfComponent {
+  @Input() label: string = '';
+    @Input() iconePrefixo: string = '';
+}
+COPIAR CÓDIGO
+Além da label e do ícone, temos o placeholder nesse input, que também deve ser recebido como propriedade.
+
+Mas, antes disso, vamos nos atentar a um detalhe: no nosso Figma, podemos notar que não estamos utilizando o placeholder em si. Temos, na verdade, uma label flutuante nesse input.
+
+Ou seja, não precisamos de um placeholder. Vamos removê-lo do nosso HTML, simplificando o código:
+
+dropdown-uf.component.html
+<mat-form-field class="input-container" appearance="outline">
+  <mat-label>{{ label }}</mat-label>
+  <mat-icon matPrefix>
+    {{ iconePrefixo }}
+  </mat-icon>
+  <input matInput>
+  <mat-icon matSuffix>search</mat-icon>
+</mat-form-field>
+COPIAR CÓDIGO
+Temos, então: o contêiner do input, a label, o ícone como prefixo e o sufixo de ícone search, a lupa de busca, que é sempre o mesmo.
+
+Essa é a base do componente para começarmos a receber as informações necessárias por parâmetro.
+
+Recebendo os inputs
+No arquivo form-busca.component.html, vamos receber os valores variáveis do input nas tags <app-dropdown-uf/>.
+
+O primeiro terá uma label que recebe a string "Origem". O segundo terá uma label que recebe "Destino".
+
+Além disso, passaremos também a propriedade variável iconePrefixo: o primeiro input receberá "flight_takeoff", de avião decolando; o segundo receberá "flight_land", de avião pousando:
+
+form-busca.component.html
+<app-dropdown-uf label="Origem" iconePrefixo="flight_takeoff"/> 
+<button mat-icon-button> 
+    <mat-icon>sync_alt</mat-icon>
+</button>
+<app-dropdown-uf label="Destino" iconePrefixo="flight_land"/>
+COPIAR CÓDIGO
+Vamos verificar se isso é o suficiente.
+
+De volta ao navegador, vamos recarregar a página da aplicação. Nosso input já está com o visual mais próximo do desejado:
+
+menu de busca de passagens da JornadaMilhas. o input de seleção de estados de origem e destino já não estão mais exibindo apenas a frase "dropdown-uf works!", mas os campos de busca de Origem e Destino, com seus respectivos ícones de avião decolando e avião pousando, assim como o ícone de lupa de busca. os elementos não estão alinhados entre si.
+
+Vamos clicar na página com o botão direito e selecionar a opção "Inspecionar > Elementos".
+
+Na aba de inspeção à direita, podemos localizar o elemento correto no HTML da página. Maravilha!
+
+Mas, parece que está faltando algum SCSS, pois os elementos não estão exatamente alinhados com os inputs de data de ida e volta.
+
+Melhorando o estilo
+Voltando ao VS Code, vamos abrir o arquivo form-busca.component.scss. Nele, temos um input-container que possui uma margem inferior negativa de 1,25.
+
+Conforme o código comentado do arquivo HTML do formulário de busca, esse é o estilo que precisamos adicionar ao nosso input.
+
+Então, vamos copiar esse estilo e colar no arquivo SCSS do dropdown-uf, que estava vazio até então:
+
+dropdown-uf.component.scss
+.input-container {
+  margin-bottom: -1.25em;
+}
+COPIAR CÓDIGO
+Vamos voltar ao navegador e recarregar a página. O visual do nosso input está um pouco melhor!
+
+menu de busca de passagens da JornadaMilhas. agora, os elementos do input de Origem e Destino estão alinhados.
+
+As labels e ícones foram recebidos corretamente, e os elementos do formulário estão alinhados.
+
+Implementando o Autocomplete
+Chegou a hora de evoluir esse input e transformá-lo num Autocomplete real.
+
+Vamos retornar à documentação do Autocomplete do Angular Material para entender o que é necessário a nível de marcação para que ele funcione.
+
+No código HTML do componente de exemplo, podemos notar que o mat-autocomplete está vinculado a um input, o que já temos.
+
+Então, basicamente, o que precisamos fazer é adicionar uma diretiva para vincular os dois elementos:
+
+Documentação
+<form class="example-form">
+  <mat-form-field class="example-full-width">
+    <mat-label>Number</mat-label>
+    <input type="text"
+           placeholder="Pick one"
+           aria-label="Number"
+           matInput
+           [formControl]="myControl"
+           [matAutocomplete]="auto">
+    <mat-autocomplete #auto="matAutocomplete">
+      <mat-option *ngFor="let option of filteredOptions | async" [value]="option">
+        {{option}}
+      </mat-option>
+    </mat-autocomplete>
+  </mat-form-field>
+</form>
+COPIAR CÓDIGO
+Vamos copiar a tag <mat-autocomplete> da documentação e colar no arquivo HTML do dropdown-uf, logo abaixo do nosso ícone de sufixo:
+
+dropdown-uf.component.html
+<mat-form-field class="input-container" appearance="outline">
+  <mat-label>{{ label }}</mat-label>
+  <mat-icon matPrefix>
+    {{ iconePrefixo }}
+  </mat-icon>
+  <input matInput>
+  <mat-icon matSuffix>search</mat-icon>
+  <mat-autocomplete #auto="matAutocomplete">
+    <mat-option *ngFor="let option of filteredOptions | async" [value]="option">
+      {{ option }}
+    </mat-option>
+  </mat-autocomplete>
+</mat-form-field>
+COPIAR CÓDIGO
+Esse código diz: precisamos de uma opção (option) para cada opção filtrada (filteredOptions).
+
+O componente filteredOptions ainda não existe. Para não ter um erro de compilação, vamos iniciá-lo no arquivo TypeScript como um array vazio, ao final do código, dentro da classe DropdownUfComponent:
+
+dropdown-uf.component.ts
+filteredOptions = []
+COPIAR CÓDIGO
+Voltando para o HTML, o que falta fazer é vincular esse Autocomplete ao nosso input.
+
+Conforme a documentação, precisamos criar uma diretiva [matAutocomplete] apontando para o #auto que acabamos de implementar.
+
+Então, dentro da tag <input>, vamos dar um espaço depois de matInput e colar essa diretiva:
+
+dropdown-uf.component.html
+<!-- código omitido --> 
+<input matInput [matAutocomplete]="auto">
+<!-- código omitido --> 
+COPIAR CÓDIGO
+O "auto", que está agora na linha 6 e é o valor do [matAutocomplete], é justamente o #auto que vincula as duas coisas.
+
+Vamos ver se isso será suficiente para, pelo menos, manter o Autocomplete funcionando sem quebrar.
+
+De volta ao navegador, recarregamos a página da JornadaMilhas. Ela está nos apontando um erro de compilação. Vamos verificar no menu "Inspecionar > Console".
+
+Corrigindo o erro
+Temos um erro de Observable, porque um array fixo sempre vazio não é o mesmo que um Observable.
+
+No VSCode, vamos voltar no arquivo HTML do dropdown-uf. Na linha nove, temos um | async ao lado de filteredOptions. Podemos removê-lo por enquanto, pois o filteredOptions ainda não é assíncrono:
+
+dropdown-uf.component.html
+<mat-form-field class="input-container" appearance="outline">
+  <mat-label>{{ label }}</mat-label>
+  <mat-icon matPrefix>
+    {{ iconePrefixo }}
+  </mat-icon>
+  <input matInput [matAutocomplete]="auto">
+  <mat-icon matSuffix>search</mat-icon>
+  <mat-autocomplete #auto="matAutocomplete">
+    <mat-option *ngFor="let option of filteredOptions" [value]="option">
+      {{ option }}
+    </mat-option>
+  </mat-autocomplete>
+</mat-form-field>
+COPIAR CÓDIGO
+Retornando ao navegador e recarregando a página, temos tudo funcionando normalmente!
+
+Agora, o que podemos fazer é obter esses estados (UFs) e passá-los para o componente via propriedades.
+
+@@04
+Controles do form
+
+Agora, o que precisamos é, de fato, trazer essas unidades federativas (UFs) brasileiras para o nosso dropdown.
+Obtendo as unidades federativas
+Podemos nos valer de diferentes estratégias para fazer isso, mas no desafio e na aula anterior, sugerimos trabalhar com uma camada de cache, guardando os resultados das unidades federativas em memória.
+
+Assim, evitamos que vários pedidos sejam feitos, visto que essa não é uma lista que não vai mudar muito. É muito difícil que, no período de uma atualização de página, um estado brasileiro seja criado!
+
+Sendo assim, como já deixamos tudo isso pronto no desafio e na aula anterior, o que precisamos fazer agora é usar o que temos.
+
+No arquivo dropdown-uf.component.ts, vamos criar um construtor (constructor () {} recebendo o nosso serviço injetado. Então, entre os parênteses, chamamos o private unidadeFederativaService, cujo tipo será UnidadeFederativaService.
+
+Além disso, diremos que a nossa classe DropdownUfComponent implementa o OnInit em sua declaração:
+
+dropdown-uf.component.ts
+export class DropdownUfComponent implements OnInit {
+  @Input() label: string = '';
+  @Input() iconePrefixo: string = '';
+
+  filteredOptions = []
+
+  constructor(
+    private unidadeFederativaService: UnidadeFederativaService) {
+
+  }
+COPIAR CÓDIGO
+Abaixo do fechamento do construtor, ainda dentro da classe, vamos adicionar o método ngOnInit(), automaticamente sugerido e completado pelo VS Code. Esse método não retorna nada, por isso o void {}.
+
+Sabendo disso, podemos chamar nosso serviço dentro das chaves do void, com this.unidadeFederativaService e pedir o método listar().
+
+Depois de listar, podemos fazer um subscribe() e, dentro desse método, teremos acesso aos dados que voltaram da API, então: dados => {}:
+
+ ngOnInit(): void {
+    this.unidadeFederativaService.listar()
+      .subscribe(dados => {
+            
+            })
+    }
+COPIAR CÓDIGO
+Podemos fazer o que quisermos com essa variável. Por exemplo, podemos criar uma lista de unidades federativas fora desse método, logo abaixo do @Input.
+
+Essa lista se chamará unidadesFederativas e será do tipo UnidadeFederativa[], pois é um array (isso foi feito no desafio).
+
+Teremos uma marcação em vermelho em unidadesFederativas, pois essa propriedade não foi inicializada e não é atribuída no construtor. Então, podemos inicializá-la com um array vazio:
+
+unidadesFederativas: UnidadeFederativa[] = [];
+COPIAR CÓDIGO
+Assim, garantimos que tudo funciona e o TypeScript para de reclamar.
+
+Além disso, estamos sendo mais defensivos. Imagine que o componente tentou fazer algo com essas unidadesFederativas antes da API responder.
+
+Não teremos problema nesse caso, porque como é um array vazio, todos os métodos do array já estarão disponíveis. Ou seja, ele não será undefined e não receberemos aquele grande erro em vermelho no console.
+
+Voltando para o nosso subscribe(), quando esses dados chegarem, podemos dizer que this.unidadesFederativas vai receber os dados que acabamos de sobescrever.
+
+Para garantir que isso funciona, vamos dar um console.log() dos valores de unidadesFederativas.
+
+Então, nosso método ngOnInit() ficará assim, por fim:
+
+ngOnInit(): void {
+    this.unidadeFederativaService.listar()
+        .subscribe(dados => {
+            this.unidadesFederativas = dados
+            console.log(this.unidadesFederativas)
+        })
+}
+COPIAR CÓDIGO
+Agora, podemos testar se o que implementamos no desafio da aula anterior está funcionando.
+
+Com tudo isso pronto, sem erros no VS Code, vamos (com um pouco de esperança!) para o nosso navegador para verificar se temos algum erro no console.
+
+Ao recarregar a página da JornadaMilhas, não recebemos nenhum erro no menu Inspecionar!
+
+Na aba "Network", podemos notar uma chamada única para os nossos estados; porém, temos dois console.log() desses estados. Ou seja, a nossa camada de cache está funcionando corretamente.
+
+Desafio: Filtro do Autocomplete
+O que precisamos fazer agora que já temos as unidades federativas em mãos?! Vincular isso com o Autocomplete que começamos a implementar!
+
+Na documentação do Autocomplete do Angular Material, vamos abrir a aba de TypeScript to código do componente de exemplo para entender como fazer isso.
+
+Podemos implementar um filtro (_filter), um método que mudará a exibição desse Autocomplete a depender do que a pessoa usuária digitar:
+
+Documentação
+private _filter(value: string): string[] {
+    const filterValue = value.toLowerCase();
+
+    return this.options.filter(option => option.toLowerCase().includes(filterValue));
+}
+COPIAR CÓDIGO
+Isso ficará como desafio para você! A prática consistirá em dois passos:
+
+Criar um formControl para cada input desses: um para "Origem" e um para "Destino".
+Esse formControl pode ser passado via input para o nosso componente. Nele, podemos fazer o que o Material sugere na documentação: this.myControl, usando o formControl que recebemos via input, .valueChanges.pipe() e, dentro desse método, inserir um código de RxJS para fazer o map() e filtrar os estados brasileiros.
+Exemplo da documentação
+ngOnInit() {
+    this.filteredOptions = this.myControl.valueChanges.pipe(
+        startWith(''),
+        map(value => this._filter(value || '')),
+    );
+}
+COPIAR CÓDIGO
+Deixaremos uma atividade a seguir, descrevendo o desafio mais detalhadamente para você praticar o que temos feito com o Angular até agora.
+
+É essencial que você pratique porque, na próxima aula, precisaremos disso pronto. Combinado?!
+
+Agora é a sua vez de brilhar! Contamos com você para continuar, e ainda há muito a fazer no JornadaMilhas.
+
+@@05
+Componentização dentro de formulários
+
+A equipe decidiu componentizar esses inputs e torná-los reutilizáveis, permitindo a passagem de informações de label, ícone e formControl.
+De acordo com essa situação, qual seria a melhor abordagem para implementar um componente de seleção de estados de origem e destino? Marque a alternativa correta.
+
+Utilizar um único componente para a seleção de estados de origem e destino, implementando a lógica de seleção e exibição dos estados internamente, sem a necessidade do decorator @Input.
+ 
+Essa abordagem não permite a flexibilidade de reutilização do componente em diferentes partes do aplicativo, pois a lógica de seleção e exibição dos estados estaria restrita a um único componente.
+Alternativa correta
+Adicionar diretamente o código HTML dos inputs de estado de origem e estado de destino nos locais onde são necessários, sem a utilização de componentes reutilizáveis.
+ 
+Alternativa correta
+Implementar dois componentes separados, um para o input de estado de origem e outro para o input de estado de destino, sem a passagem de informações de label, ícone e formControl.
+ 
+Alternativa correta
+Utilizar um serviço compartilhado para gerenciar os inputs de estado de origem e estado de destino, evitando a necessidade de criar um componente específico para esses inputs.
+
+@@06
+Desafio: depoimentos dinâmicos e buscando controles
+
+Chegou a sua hora da aventura, parte 3! Nós já sabemos como criar serviços que obtém dados da API, inclusive lidando com cache!
+O desafio dessa vez é ajustar nossa rotina que lista depoimentos, obtendo os dados da nossa API ao invés de exibirmos código estático. Claro, vamos precisar refatorar um pouco nosso código existente.
+
+Depois, implemente no FormBuscaService um método que busca por um FormControl e lança um erro se não encontrar. Isso vai ajudar a gente em algumas rotinas mais pra frente.
+
+Mão na massa!
+
+Bora de código?
+O meu serviço ficou assim:
+
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { environment } from 'src/environments/environment';
+import { Depoimento } from '../types/type';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class DepoimentoService {
+
+  private apiUrl: string = environment.apiUrl
+
+  constructor(
+    private http: HttpClient
+  ) { 
+  }
+
+  listar() : Observable<Depoimento[]>{
+    return this.http.get<Depoimento[]>(`${this.apiUrl}/depoimentos`);
+  }
+}
+COPIAR CÓDIGO
+E os componentes:
+
+<!-- src/app/pages/home/depoimentos/depoimentos.component.html -->
+<div class="card-wrapper">
+    <app-card-depoimento  *ngFor="let item of depoimentos" [depoimento]="item" />
+</div>
+COPIAR CÓDIGO
+// src/app/pages/home/depoimentos/depoimentos.component.ts
+import { Component } from '@angular/core';
+import { DepoimentoService } from 'src/app/core/services/depoimento.service';
+import { Depoimento } from 'src/app/core/types/type';
+
+@Component({
+  selector: 'app-depoimentos',
+  templateUrl: './depoimentos.component.html',
+  styleUrls: ['./depoimentos.component.scss']
+})
+export class DepoimentosComponent {
+  depoimentos: Depoimento[] = [];
+  constructor(private service: DepoimentoService) {
+  }
+  ngOnInit(): void {
+    this.service.listar().subscribe(
+      res => {
+        this.depoimentos = res;
+      }
+    )
+  }
+}
+COPIAR CÓDIGO
+E o componente CardDepoimento:
+
+<mat-card class="depoimento">
+  <mat-card-content>
+    <img src="assets/imagens/avatar3.png" alt="Avatar da pessoa autora do depoimento">
+    <ul>
+      <li>{{ depoimento.texto }}</li>
+      <li>
+        <strong>{{ depoimento.autor }}</strong>
+      </li>
+    </ul>
+  </mat-card-content>
+</mat-card>
+COPIAR CÓDIGO
+import { Component, Input } from '@angular/core';
+import { Depoimento } from 'src/app/core/types/type';
+
+@Component({
+  selector: 'app-card-depoimento',
+  templateUrl: './card-depoimento.component.html',
+  styleUrls: ['./card-depoimento.component.scss']
+})
+export class CardDepoimentoComponent {
+  @Input() depoimento!: Depoimento;
+
+}
+COPIAR CÓDIGO
+E o último detalhe, aquele método que faltava no FormBuscaService:
+
+  obterControle(nome:string): FormControl {
+    const control = this.formBusca.get(nome);
+    if (!control) {
+      throw new Error(`FormControl com nome "${nome}" não existe.`);
+    }
+    return control as FormControl;
+  }
