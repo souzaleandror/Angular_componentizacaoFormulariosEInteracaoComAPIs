@@ -1,0 +1,50 @@
+<section class="modal">
+  <h1 mat-dialog-title>Viajante</h1>
+  <div mat-dialog-content>
+    <div class="selecao-idade">
+      <ul>
+        <li><strong>Adultos</strong></li>
+        <li>(Acima de 12 anos)</li>
+        <li>
+          <app-botao-controle operacao="decrementar"></app-botao-controle>
+          <span> {{ formBuscaService.formBusca.get('adultos')?.value }}</span>
+          <app-botao-controle operacao="incrementar"></app-botao-controle>
+        </li>
+      </ul>
+      <ul>
+        <li><strong>Crianças</strong></li>
+        <li>(Entre 2 e 11 anos)</li>
+        <li>
+          <app-botao-controle operacao="decrementar"></app-botao-controle>
+          <span>{{ formBuscaService.formBusca.get('criancas')?.value }}</span>
+          <app-botao-controle operacao="incrementar"></app-botao-controle>
+        </li>
+      </ul>
+      <ul>
+        <li><strong>Bebês</strong></li>
+        <li>(Até 2 anos)</li>
+        <li>
+          <app-botao-controle operacao="decrementar"></app-botao-controle>
+          <span>{{ formBuscaService.formBusca.get('bebes')?.value }}</span>
+          <app-botao-controle operacao="incrementar"></app-botao-controle>
+        </li>
+      </ul>
+    </div>
+    <div class="selecao-categoria">
+      <p><strong>Categoria</strong></p>
+      <mat-chip-listbox aria-label="Seleção de passagens">
+        <mat-chip-option value="Economica" [selected]="formBuscaService.formBusca.get('tipo')?.value === 'Economica'"
+          (selectionChange)="formBuscaService.alterarTipo($event, 'Economica')">
+          Economica
+        </mat-chip-option>
+        <mat-chip-option value="Executiva" [selected]="formBuscaService.formBusca.get('tipo')?.value === 'Executiva'"
+          (selectionChange)="formBuscaService.alterarTipo($event, 'Executiva')">
+          Executiva
+        </mat-chip-option>
+      </mat-chip-listbox>
+    </div>
+  </div>
+  <div mat-dialog-actions class="modal-actions">
+    <button color="primary" mat-flat-button mat-dialog-close>BUSCAR</button>
+  </div>
+</section>

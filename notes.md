@@ -1689,3 +1689,417 @@ E o último detalhe, aquele método que faltava no FormBuscaService:
     }
     return control as FormControl;
   }
+
+
+#### 03/03/2024
+
+@04-Controlando a modal
+
+@@01
+Projeto da aula anterior
+PRÓXIMA ATIVIDADE
+
+Caso queira revisar o código até aqui ou começar a partir desse ponto, disponibilizamos os códigos realizados na aula anterior, para baixá-lo clique neste link ou veja nosso repositório do Github.
+
+@@02
+Preparando o ambiente: ajustes de estilo
+PRÓXIMA ATIVIDADE
+
+Bora ajustar alguns detalhes da nossa aplicação?
+Pra gente poder focar no Angular e no formulário de busca, vou deixar aqui pra você uns ajustes visuais que precisamos fazer no form de busca:
+
+      <mat-chip (click)="openDialog()">
+        <div class="inner">
+          <mat-icon>check</mat-icon> 1 adulto
+        </div>
+      </mat-chip>
+      <mat-chip (click)="openDialog()">
+        <div class="inner">
+          <mat-icon>check</mat-icon> Econômica
+        </div>
+      </mat-chip>
+COPIAR CÓDIGO
+E o SCSS:
+
+.form-busca {
+    margin: 40px 0;
+    display: block;
+
+    .flex-container {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 16px 0;
+    }
+
+    .input-container {
+        margin-bottom: -1.25em;
+    }
+
+    .mat-button-toggle-checked {
+        background-color: #F7F2FA;
+    }
+
+    h2 {
+        font-size: 32px;
+        margin-bottom: 20px;
+    }
+
+    mat-chip {
+        .inner {
+            overflow: visible;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+    }
+}
+COPIAR CÓDIGO
+Com esses ajustes, temos a estrutura que precisamos para controlarmos a abertura da modal e exibirmos os dados que foram manipulados nela.
+
+@@03
+Abertura e fechamento
+
+Agora já temos origem e destino com o desafio resolvido. Abrindo o projeto no navegador e clicando no campo Origem, se começarmos a digitar "Rio de Janeiro", ele encontra a cidade correta. Assim, o nosso auto complete está funcionando.
+Podemos então focar no próximo passo: a modal. Nesta aula, deixamos uma atividade chamada "Preparando o Ambiente", para fazermos pequenos ajustes no chip da quantidade de passageiros e do tipo de passagem. Esse processo envolverá um pouco de CSS e HTML.
+
+Feito isso, podemos ajustar e controlar os dados da modal. Abrindo o VS Code, acessaremos o arquivo "form-busca-component.ts", em "form-busca > dropdown-uf".
+
+A ideia é controlar o estado da modal pelo form-busca-service. A modal é uma extensão do formulário, portanto, faz sentido que o serviço saiba como abri-la.
+
+Desse arquivo, recortaremos o método openDialog usando o atalho "CTRL + X" do teclado.
+
+openDialog() {
+    this.dialog.open(ModalComponent, {
+        width: '50%'
+    })
+}
+COPIAR CÓDIGO
+Colaremos esse trecho em "form-busca-service.ts", abaixo do restante do código. Obteremos um erro de que não existe dialog nem ModalComponent dentro dessa classe. Importaremos o ModalComponent e o dialog será um serviço injetado no construtor.
+
+Voltaremos ao "form-busca-component.ts" e recortaremos o MatDialog do construtor, localizado em:
+
+import class FormBuscaComponent {
+    constructor(public dialog: MatDialog,
+        public formBuscaService : FormBuscaService) {}
+COPIAR CÓDIGO
+O resultado será o seguinte:
+
+import class FormBuscaComponent {
+    constructor(
+        public formBuscaService : FormBuscaService) {}
+COPIAR CÓDIGO
+Com isso, podemos também excluir as importações do MatDialog e do ModalComponent:
+
+import { MatDialog } from '@angular/material/dialog';
+import { ModalComponent } from '../modal/modal.component';
+COPIAR CÓDIGO
+Salvaremos essas alterações e voltaremos ao arquivo "form-busca-service.ts" e colar o trecho recortado no construtor:
+
+constructor(private dialog: MatDialog) {
+
+// Trecho de código suprimido
+COPIAR CÓDIGO
+Ele não precisa ser público, pois quem abrirá o dialog é o próprio formulário. Encapsulamos o método dentro da função que acabamos de trazer do "form-busca-component.ts".
+
+Em seguida, abriremos o arquivo "form-busca-component.html" e editaremos o trecho <mat-chip>. Ao clique, queremos chamar o formBuscaService.openDialog(). Faremos esse processo a partir dos dois chips:
+
+// Trecho de código suprimido
+
+<mat-chip (click)="formBuscaService.openDialog()">
+    <div class="inner">
+        <mat-icon>check</mat-icon> 1 adulto
+    </div>
+</mat-chip>
+<mat-chip (click)="formBuscaService.openDialog()">
+    <div class="inner">
+        <mat-icon>check</mat-icon> Econômica
+    </div>
+</mat-chip>
+COPIAR CÓDIGO
+Com isso, migramos a responsabilidade de abrir a modal para o formBuscaService. Voltaremos ao navegador e recarregaremos a página. Quando tentamos abrir a modal, ela funciona corretamente, tanto ao clicarmos na quantidade de passageiros "1 adulto" quanto na modalidade da passagem "Econômica".
+
+A seguir, precisamos alterar a categoria presente na modal a partir da interação da pessoa usuária. O próximo passo é criar um Form Control que cuidará disso.
+
+Mas tem um detalhe: voltando ao VS Code, abriremos "app > shared > modal > modal.component.html" e nos preocuparemos em editar o <mat-chip-listbox>. Esse trecho é um componente do Material Design e não sabe trabalhar com o Form Control. Precisamos fazer essa troca manualmente.
+
+Temos que ouvir essa alteração e cuidar do estado do formulário. Já temos uma fonte de verdade, o Form Control. Faremos tudo isso no próximo vídeo.
+
+@@04
+Chips e o form control
+
+Agora, evoluiremos o mat-chip-listbox para trocar o valor. Começaremos criando o form control. Queremos iniciá-lo com o tipo Econômica selecionado, então podemos copiar essa palavra do arquivo "modal.component.html".
+Percorreremos o caminho "core > services > form-busca.service.ts". Nesse arquivo, criaremos um novo form control dentro das chaves de FormGroup({}), passando como parâmetro a palavra "Econômica" como valor padrão:
+
+tipo: new FormControl('Econômica')
+COPIAR CÓDIGO
+Em seguida, voltaremos ao arquivo "modal.component.html" e retiraremos o selected do mat-chip-option e trocaremos a ordem: a primeira opção será "Econômica" e a segunda, "Executiva". O trecho do código ficou da seguinte forma:
+
+    <div class="selecao-categoria">
+      <p><strong>Categoria</strong></p>
+      <mat-chip-listbox aria-label="Seleção de passagens">
+        <mat-chip-option>Econômica</mat-chip-option>
+        <mat-chip-option>Executiva</mat-chip-option>
+      </mat-chip-listbox>
+    </div>
+COPIAR CÓDIGO
+O trecho que diz respeito à quantidade de pessoas está acima do nosso componente. Por enquanto, focaremos na categoria da passagem (econômica ou executiva). Podemos trazer o atributo value:
+
+    <div class="selecao-categoria">
+      <p><strong>Categoria</strong></p>
+      <mat-chip-listbox aria-label="Seleção de passagens">
+        <mat-chip-option value="Econômica">Econômica</mat-chip-option>
+        <mat-chip-option value="Executiva">Executiva</mat-chip-option>
+      </mat-chip-listbox>
+    </div>
+COPIAR CÓDIGO
+O próximo passo é definir como saberemos se um valor está selecionado. Primeiro, quebraremos as linhas para esse trecho ficar mais compreensível:
+
+    <div class="selecao-categoria">
+      <p><strong>Categoria</strong></p>
+      <mat-chip-listbox aria-label="Seleção de passagens">
+        <mat-chip-option
+                    value="Econômica"
+                    >
+                        >Econômica
+                    </mat-chip-option>
+        <mat-chip-option
+                    value="Executiva
+                >
+                    Executiva
+                </mat-chip-option>
+      </mat-chip-listbox>
+    </div>
+COPIAR CÓDIGO
+A partir daqui, acrescentaremos um selected que irá variar. Por isso, chamaremos formBuscaService. Obteremos um erro indicando que formBuscaService não existe, isso porque ainda não o injetamos.
+
+Faremos isso acessando o arquivo "modal.componenet.ts" e, dentro das chaves de class ModalComponent, adicionaremos um construtor. Já que estamos acessando direto do template, teremos um formBuscaService público, do tipo FormBuscaService:
+
+export class ModalComponent {
+    constructor (public formBuscaService: FormBuscaService) {
+    
+    }
+}
+COPIAR CÓDIGO
+Agora, voltaremos ao selected no arquivo "modal.component.html", acrescentando um .formBusca.get('tipo') logo após formBuscaService. O .get não garante que ele retornará um FormControl. Por isso, precisamos inserir um ponto de interrogação logo após a indicação do tipo. Assim, se value for exatamente igual (===) a Econômica, queremos que ele seja ativado:
+
+    <div class="selecao-categoria">
+      <p><strong>Categoria</strong></p>
+      <mat-chip-listbox aria-label="Seleção de passagens">
+        <mat-chip-option
+                    value="Econômica"
+                    [selected]="formBuscaService.formBusca.get('tipo')?.value === 'Econômica'"
+                    >
+
+// Trecho de código suprimido
+COPIAR CÓDIGO
+O mesmo acontece para a categoria "Executiva", mudando apenas o nome da seleção:
+
+// Trecho de código suprimido
+
+        <mat-chip-option
+                    value="Executiva
+                    [selected]="formBuscaService.formBusca.get('tipo')?.value === 'Executiva'"
+                >
+                    Executiva
+
+// Trecho de código suprimido
+COPIAR CÓDIGO
+Teoricamente, isso fará com que, por padrão, a classe Econômica fique selecionada. Testaremos isso recarregando a página do navegador e clicando no botão para visualizar o modal. Percebemos, então, que a categoria Econômica está selecionada.
+
+E se mudarmos para Executiva? Abriremos o arquivo "form-busca.service.ts" e editaremos o texto dentro do FormControl substituindo o "Econômica" por "Executiva":
+
+tipo: new FormControl('Executiva')
+COPIAR CÓDIGO
+Voltaremos ao navegador, recarregaremos a página e abriremos a modal. O resultado é que agora a categoria Executiva está selecionada.
+
+O nosso estado inicial está funcionando. Agora, precisamos fazer a troca quando a seleção mudar. Precisamos que esse valor se reflita no formulário.
+
+Para fazer isso, abriremos o arquivo "modal.component.html". Logo abaixo da linha [selected] do valor "Executiva", ouviremos o evento selectionChange. Podemos inserir nele um formBuscaService.alterarTipo(). Seu parâmetro será o $event.
+
+Com isso, teremos acesso ao que foi executado. Para facilitar o nosso trabalho, podemos passar o texto 'Executiva'" logo após o evento, separando ambos por uma vírgula.
+
+// Trecho de código suprimido
+
+        <mat-chip-option
+                    value="Executiva
+                    [selected]="formBuscaService.formBusca.get('tipo')?.value === 'Executiva'"
+                    (selectionChange)="formBuscaService.alterarTipo($event, 'Executiva')"
+                >
+                    Executiva
+
+// Trecho de código suprimido
+COPIAR CÓDIGO
+No valor "Econômica", faremos a mesma alteração:
+
+// Trecho de código suprimido
+
+        <mat-chip-option
+                    value="Econômica"
+                    [selected]="formBuscaService.formBusca.get('tipo')?.value === 'Econômica'"
+                    (selectionChange)="formBuscaService.alterarTipo($event, 'Econômica')"
+                    >
+
+// Trecho de código suprimido
+COPIAR CÓDIGO
+Se observarmos com atenção, perceberemos que o VS Code está apontando um erro em alterarTipo, indicando que ele não existe. Para corrigir esse problema, vamos implementá-lo em "form-busca.service.ts".
+
+Logo abaixo do método obterControle(), criaremos o método alterarTipo(). Ele receberá um evento do tipo MatChipSelectionChange. Como segundo argumento, recebemos o tipo string.
+
+Nesse método, podemos criar uma condicional if para indicar que, se o evento for de seleção (evento.selected), atualizaremos o valor parcial do "form-busca", passando parcialmente o tipo. O trecho completo ficou da seguinte forma:
+
+// Trecho de código suprimido
+
+alterarTipo (evento: MatChipSelectionChange, tipo: string) {
+    if (evento.selected) {
+        this.formBusca.patchValue({
+            tipo,
+        )}
+    }
+}
+COPIAR CÓDIGO
+A única coisa que muda é o tipo. Salvaremos, retornaremos ao navegador e carregaremos a página para testar. Abrindo a modal, clicaremos em uma categoria por vez para verificar a troca e, por enquanto, tudo está funcionando corretamente.
+
+Ainda não temos a submissão do formulário. Então, para testar, usaremos o console log.
+
+Dentro das chaves de alterarTipo, escreveremos console.log('Tipo de passagem alterado para: ', tipo ):
+
+// Trecho de código suprimido
+
+alterarTipo (evento: MatChipSelectionChange, tipo: string) {
+    if (evento.selected) {
+        this.formBusca.patchValue({
+            tipo,
+        )}
+        console.log('Tipo de passagem alterado para: ', tipo )
+    }
+}
+COPIAR CÓDIGO
+Voltando ao navegador, recarregaremos a página, limparemos o terminal e abriremos a modal. Ao clicar alternadamente em "Econômica" e "Executiva", observaremos as mensagens no Console:
+
+Tipo de passagem alterado para: Executiva
+Tipo de passagem alterado para: Econômica
+O patch funciona corretamente, mas ainda temos mais coisas para fazer. Esperamos você no próximo vídeo!
+
+@@05
+Descrição de passageiros
+
+Nossa modal já está sendo controlada pelo nosso serviço. O próximo passo é fazer o controle da quantidade de passageiros. Abriremos o navegador e clicaremos no modal.
+Além das categorias "Executiva" e "Econômica", temos três campos que indicam a quantidade de pessoas adultas, crianças e bebês que farão a viagem.
+
+Cada um deles tem um componente com dois botões: um com o sinal gráfico de soma e outro, de subtração. Ele tem também um valor numérico.
+
+Por isso, precisamos de três controles: um para adultos, outro para crianças e um terceiro para bebês.
+
+Abriremos o VS Code e acessaremos o arquivo "form-busca.service.ts". Dentro das chaves de this.formBusca = new FormGroup({}), escreveremos adultos: new FormControl(1), assim, o campo "adultos" começará com o número 1 por padrão.
+
+Também teremos crianças. Logo, escreveremos criancas: new FormControl(0), começando com o valor zero. Podemos copiar e colar essa mesma linha, editando-a para integrar o campo bebes. O resultado é o seguinte:
+
+    this.formBusca = new FormGroup({
+
+// Trecho de código suprimido
+
+        adultos: new FormControl(1)
+        criancas: new FormControl(0)
+        bebes: new FormControl(0)
+    )}
+COPIAR CÓDIGO
+Com isso, estamos iniciando o controle de formulário. Ainda precisamos implementar a alteração.
+
+Antes, voltaremos ao Figma para observar uma questão: no primeiro chip, que indica a quantidade de passageiros, temos o número de pessoas e o tipo. Assim, se tivermos um adulto, uma criança e um bebê, precisamos concatenar todas essas informações.
+
+Para fazermos isso, voltaremos ao VS Code e logo abaixo do construtor, chamaremos um método getDescricaoPassageiros(), que retornará uma string. Dentro dele, começaremos uma descricao vazia, retornando-a no fim com o return descricao.
+
+Primeiro, colocaremos o valor de adultos escrevendo const adultos = this.formBusca.get('adultos')?.value. Na linha debaixo, inseriremos uma condicional if para indicar que, se tivermos um valor adultos maior que zero, queremos inserir a descricao e concatenar uma string para começar a construir o texto.
+
+getDescricaoPassageiros(): string {
+    let descricao = ''
+    
+    const adultos = this.formBusca.get('adultos')?.value
+    if (adultos && adultos > 0) {
+        descricao += ''
+    }
+    
+    return descricao
+}
+COPIAR CÓDIGO
+A partir daqui, queremos te desafiar: trabalharemos uma parte puramente lógica. Baseado em condições, teremos que definir se as palavras virão no plural ou no singular, além de organizar a quantidade de adultos, crianças e bebês. Assim, gostaríamos que você pensasse e implementasse o trecho que falta no código.
+
+Ao resolver o desafio, poste-o no Discord, no LinkedIn e em outras redes sociais, marcando o Vinícius Neves e mostrando a sua solução.
+
+Incluiremos um gabarito na descrição do desafio para você conferir uma possibilidade de resolução para esse problema. Esperamos você na próxima aula!
+
+@@06
+Implementando os botões de seleção
+PRÓXIMA ATIVIDADE
+
+A equipe de desenvolvimento do "Jornada Milhas" está trabalhando na implementação dos botões de seleção entre os tipos de passagem (econômica ou executiva) e já conseguiu aplicar o ícone de “check” ao botão selecionado:
+Tela da aplicação “Jornada Milhas” exibindo a seção de escolha de categoria de passagens, em que as opções estão divididas nos botões de “Econômica” e “Executiva” e ao clicar em um desses botões, ele fica em destaque
+
+No entanto, ao clicar em um desses botões de tipo de passagem, o valor do campo “tipo” no formulário não é alterado. Assim, ao testar o envio do formulário, não recebemos uma resposta indicando qual campo foi selecionado.
+
+Pensando nisso, assinale a alternativa que traz a solução para que o tipo de passagem seja capturado pelo formulário de acordo com o botão selecionado:
+
+Selecione uma alternativa
+
+Utilizar o evento (selectionChange) dos botões de tipo de passagem para chamar um método para alterar o tipo no serviço de formulário de busca.
+ 
+Utilizando o evento (selectionChange), é possível identificar quando há uma mudança na seleção do botão de tipo de passagem. Ao chamar o método alterarTipo() no serviço de formulário de busca, é possível atualizar o valor do campo tipo no formulário com base na nova seleção.
+Alternativa correta
+Adicionar um evento de clique para cada botão de tipo de passagem, chamando um método para alterar o tipo no serviço de formulário de busca.
+ 
+Alternativa correta
+Adicionar um evento de alteração de valor (change) para cada botão de tipo de passagem, chamando um método para alterar o tipo no serviço de formulário de busca.
+ 
+Alternativa correta
+Remover a propriedade [selected] dos botões de tipo de passagem, permitindo que o valor do campo tipo seja alterado independentemente da seleção do botão.
+
+@@07
+Desafio: descrevendo todos os passageiros
+PRÓXIMA ATIVIDADE
+
+Chegou a sua hora da aventura, parte 4! E que tal um pouco de desafio de lógica? A gente precisa controlar o texto baseado na seleção do usuário: X passageiro(s), Y criança(s) e Z bebê(s).
+O desafio é: precisamos exibir cada grupo se o valor selecionado for maior do que zero. Além disso, fica mais elegante se exibirmos o S do plural condicionalmente, apenas se for maior do que 1.
+
+Bora de código? Vamos criar esse algorítimo que faz essas contas pra gente?
+https://media.tenor.com/dlJSiLUJNmsAAAAC/math-calculate.gif
+
+A minha versão final ficou assim:
+
+  getDescricaoPassageiros (): string {
+    let descricao = ''
+
+    const adultos = this.formBusca.get('adultos')?.value;
+    if (adultos && adultos > 0) {
+      descricao += `${adultos} adulto${adultos > 1 ? 's' : ''}`;
+    }
+  
+    const criancas = this.formBusca.get('criancas')?.value;
+    if (criancas && criancas > 0) {
+      descricao += `${descricao ? ', ' : ''}${criancas} criança${criancas > 1 ? 's' : ''}`;
+    }
+  
+    const bebes = this.formBusca.get('bebes')?.value;
+    if (bebes && bebes > 0) {
+      descricao += `${descricao ? ', ' : ''}${bebes} bebê${bebes > 1 ? 's' : ''}`;
+    }
+  
+    return descricao
+  }
+COPIAR CÓDIGO
+Em getDescricaoPassageiros(), nós lidamos com várias técnicas interessantes de JavaScript. Vamos abordar cada uma delas e entender como elas contribuem para o funcionamento do código.
+
+Interpolação de strings: Em JavaScript, podemos usar a sintaxe de interpolação de string (template literals) para inserir variáveis diretamente dentro das strings. Isso é feito usando a sintaxe ${}. No nosso código, utilizamos essa técnica para inserir a quantidade de adultos, crianças e bebês diretamente nas strings de descrição.
+Operador ternário: O operador ternário é uma forma simplificada de escrever uma estrutura de controle if-else. A expressão antes do ? é a condição que está sendo verificada. Se essa condição for verdadeira, o código antes dos : é executado. Caso contrário, o código após os : é executado. No nosso código, usamos o operador ternário para decidir se devemos ou não adicionar o 's' no final dos nomes dos passageiros e para inserir uma vírgula antes dos nomes das crianças e bebês, se já tivermos uma descrição para os adultos.
+O operador ? (optional chaining): Este operador é usado para ler o valor de propriedades aninhadas dentro de um objeto sem ter que verificar explicitamente se cada nível intermediário é null ou undefined. Em outras palavras, se tentarmos ler uma propriedade de undefined ou null, receberíamos um erro. Mas com o operador ?, o JavaScript retorna undefined em vez de lançar um erro. No nosso caso, utilizamos ? para ler os valores dos campos 'adultos', 'criancas' e 'bebes' de formBusca, sem ter que verificar se formBusca ou o resultado de formBusca.get('campo') são null ou undefined.
+No fim das contas, a nossa descricao pode ficar algo tipo "2 adultos, 1 criança, 3 bebês".
+
+@@08
+O que aprendemos?
+PRÓXIMA ATIVIDADE
+
+Nessa aula, você aprendeu como:
+Controlar a abertura do modal através do serviço;
+Fazer o controle de formulário dos chips de tipo de passagem;
+Controlar o texto de seleção e quantidade de passageiros.
