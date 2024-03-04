@@ -1697,13 +1697,11 @@ E o último detalhe, aquele método que faltava no FormBuscaService:
 
 @@01
 Projeto da aula anterior
-PRÓXIMA ATIVIDADE
 
 Caso queira revisar o código até aqui ou começar a partir desse ponto, disponibilizamos os códigos realizados na aula anterior, para baixá-lo clique neste link ou veja nosso repositório do Github.
 
 @@02
 Preparando o ambiente: ajustes de estilo
-PRÓXIMA ATIVIDADE
 
 Bora ajustar alguns detalhes da nossa aplicação?
 Pra gente poder focar no Angular e no formulário de busca, vou deixar aqui pra você uns ajustes visuais que precisamos fazer no form de busca:
@@ -2032,7 +2030,6 @@ Incluiremos um gabarito na descrição do desafio para você conferir uma possib
 
 @@06
 Implementando os botões de seleção
-PRÓXIMA ATIVIDADE
 
 A equipe de desenvolvimento do "Jornada Milhas" está trabalhando na implementação dos botões de seleção entre os tipos de passagem (econômica ou executiva) e já conseguiu aplicar o ícone de “check” ao botão selecionado:
 Tela da aplicação “Jornada Milhas” exibindo a seção de escolha de categoria de passagens, em que as opções estão divididas nos botões de “Econômica” e “Executiva” e ao clicar em um desses botões, ele fica em destaque
@@ -2057,7 +2054,6 @@ Remover a propriedade [selected] dos botões de tipo de passagem, permitindo que
 
 @@07
 Desafio: descrevendo todos os passageiros
-PRÓXIMA ATIVIDADE
 
 Chegou a sua hora da aventura, parte 4! E que tal um pouco de desafio de lógica? A gente precisa controlar o texto baseado na seleção do usuário: X passageiro(s), Y criança(s) e Z bebê(s).
 O desafio é: precisamos exibir cada grupo se o valor selecionado for maior do que zero. Além disso, fica mais elegante se exibirmos o S do plural condicionalmente, apenas se for maior do que 1.
@@ -2097,9 +2093,529 @@ No fim das contas, a nossa descricao pode ficar algo tipo "2 adultos, 1 criança
 
 @@08
 O que aprendemos?
-PRÓXIMA ATIVIDADE
 
 Nessa aula, você aprendeu como:
 Controlar a abertura do modal através do serviço;
 Fazer o controle de formulário dos chips de tipo de passagem;
 Controlar o texto de seleção e quantidade de passageiros.
+
+##### 04/03/2024
+
+@05-Ajustes finais
+
+@@01
+Projeto da aula anterior
+
+Caso queira revisar o código até aqui ou começar a partir desse ponto, disponibilizamos os códigos realizados na aula anterior, para baixá-lo clique neste link ou veja nosso repositório do Github.
+
+https://github.com/alura-cursos/jornada/archive/refs/heads/aula-4.zip
+
+https://github.com/alura-cursos/jornada/tree/aula-4
+
+@@02
+Componente de passageiros
+
+Estamos chegando no final dos ajustes do nosso projeto para trazer comportamento ao Jornada Milhas que antes estava puramente visual.
+Agora, vamos tratar do controle de passageiros. Atualmente, a nossa modal tem os botões de aumentar e diminuir o incremento de passageiros adultos, crianças e bebês. Mas, são apenas elementos visuais.
+
+Precisamos evoluí-los para ter um controle, como se fosse um input de formulário.
+
+No VS Code, vamos abrir o "src > app > shared > modal > modal.component.html". Dentro de uma div com a classe selecao-idade, temos um ul para cada grupo, ou seja, uma lista não ordenada para adulto, outra para crianças e também para bebês.
+
+modal.component.html:
+<div class="selecao-idade">
+    <ul>
+        <li><strong>Adultos</strong></li>
+        <li>(Acima de 12 anos)</li>
+        <li>
+            <app-botao-controle operacao="decrementar"></app-botao-controle>
+            <span>1</span>
+            <app-botao-controle operacao="incrementar"></app-botao-controle>
+        </li>
+    </ul>
+    <ul>
+        <li><strong>Crianças</strong></li>
+        <li>(Entre 2 e 11 anos)</li>
+        <li>
+            <app-botao-controle operacao="decrementar"></app-botao-controle>
+            <span>1</span>
+            <app-botao-controle operacao="incrementar"></app-botao-controle>
+        </li>
+    </ul>
+    <ul>
+        <li><strong>Bebês</strong></li>
+        <li>(Até 2 anos)</li>
+        <li>
+            <app-botao-controle operacao="decrementar"></app-botao-controle>
+            <span>1</span>
+            <app-botao-controle operacao="incrementar"></app-botao-controle>
+        </li>
+    </ul>
+</div>
+COPIAR CÓDIGO
+Essa tag ul fica responsável por exibir o título, o substítulo e as opções de controle de incrementar ou decrementar essa quantidade.
+
+Como temos esse bloco repetido três vezes e nosso objeto é controlá-lo via um form control, podemos refatorar esse código para virar um componente.
+
+Criar e estilizar componente de passageiros
+Para criar esse componente, vamos abrir o terminal. Estamos dentro da pasta jornada-milhas. Vamos pedir para o Angular (ng) gerar (g) um componente (c) e podemos aceitar a sugestão de criar shared/seletor-passageiro.
+
+Assim, podemos criar e extrair essa lógica para o componente de seletor de passageiros.
+
+ng g c shared/seletor-passageiro
+COPIAR CÓDIGO
+Após gerar o componente, vamos voltar no VS Code. Ele já está registrado no app.module.ts e já gerou o componente seletor-passageiro na pasta "shared > seletor-passageiro".
+
+O HTML vai ser o código de uma das tags ul que já temos. Portanto, podemos copiar a ul com o li de título, li de subtítulo e o terceiro li com os botões de quantidade do modal.component.html.
+
+seletor-passageiro.component.html:
+<ul>
+    <li><strong>Adultos</strong></li>
+    <li>(Acima de 12 anos)</li>
+    <li>
+        <app-botao-controle operacao="decrementar"></app-botao-controle>
+        <span>1</span>
+        <app-botao-controle operacao="incrementar"></app-botao-controle>
+    </li>
+</ul>
+COPIAR CÓDIGO
+Com o botão direito do mouse, vamos pedir para o VS Code formatar o documento (ou "Shift + Alt + F").
+
+Agora, a classe selecao-idade tem um CSS que precisamos jogar para o componente. Por isso, vamos abrir o modal.component.scss e procurar por .selecao-idade.
+
+Vamos recortar o trecho de CSS com "Ctrl + X", sendo somente os estilos do ul, li e span. Vamos colar com "Ctrl + V" no SCSS do componente:
+
+seletor-passageiro.component.scss:
+ul {
+    list-style-type: none;
+    margin: 0 0 0 -1em;
+    padding: 0;
+    li {
+        margin-bottom: 10px;
+        margin: 12px;
+        font-weight: 400;
+        font-size: 16px;
+        line-height: 20px;
+        color: #1D1B20;
+        text-align: start;
+        padding: 0;
+        span {
+            vertical-align: middle;
+            padding: 0 12px;
+        }
+    }
+}
+COPIAR CÓDIGO
+Feito isso, já temos o estilo e podemos começar a testar esse componente.
+
+No modal.component.html, vamos fazer o mesmo que fizemos na refatoração do dropdown de estados. Vamos comentar as três ul que temos dentro da div de seleção de idade.
+
+Dentro da div, podemos trazer o componente app-seletor-passageiro três vezes, pois vamos ter três seleções.
+
+modal.component.html:
+<div class="selecao-idade">
+    <app-seletor-passageiro />
+    <app-seletor-passageiro />
+    <app-seletor-passageiro />
+
+    <!-- Código comentado omitido -->
+
+</div>
+COPIAR CÓDIGO
+Vamos conferir se esse código está funcional. No navegador, entramos na aba do Jornada Milhas e recarregamos a página com "F5". Clicamos em "1 Adulto" para abrir a modal.
+
+Os estilos estão corretos, mas os títulos e subtítulos estão fixos. Já sabemos como fazer para receber esses dados via input.
+
+Receber dados via input
+No VS Code, vamos em seletor-passageiro.component.ts para começar a declarar os inputs.
+
+Na classe SeletorPassageiroComponent, vamos ter um @Input() chamado titulo que vai ser do tipo string. O TypeScript avisa que é preciso inicializá-la. Por isso, vamos adicionar um valor padrão, uma string vazia.
+
+Vamos duplicar a linha, pois, além do titulo, vamos ter um @Input chamado subtitulo. O título seria adulto e o subtítulo seria o texto explicativo de idade.
+
+seletor-passageiro.component.ts:
+import { Component, Input } from '@angular/core';
+
+@Component({
+  selector: 'app-seletor-passageiro',
+  templateUrl: './seletor-passageiro.component.html',
+  styleUrls: ['./seletor-passageiro.component.scss'],
+})
+export class SeletorPassageiroComponent {
+  @Input() titulo: string = ''
+  @Input() subtitulo: string = ''
+}
+COPIAR CÓDIGO
+Com isso, podemos ir ao arquivo HTML do componente. Ao invés de exibir o texto Adulto diretamente, podemos exibir o que vamos receber via input.
+
+Vamos aproveitar para quebrar a linha antes da abertura e depois do fechamento da tag strong para ficar em uma linha separada. Dentro do strong, vamos substituir Adulto para exibir o {{ titulo }}.
+
+No próximo item de lista li, vamos substituir o texto (Acima de 12 anos) por {{ subtitulo }}.
+
+seletor-passageiro.component.html:
+<ul>
+    <li>
+        <strong>{{ titulo }}</strong>
+    </li>
+    <li>{{ subtitulo }}</li>
+    <li>
+        <app-botao-controle operacao="decrementar"></app-botao-controle>
+        <span>1</span>
+        <app-botao-controle operacao="incrementar"></app-botao-controle>
+    </li>
+</ul>
+COPIAR CÓDIGO
+Após salvar, podemos voltar no navegador e recarregar a página do Jornada Milhas. Após abrir o modal, os títulos e subtítulos estão vazios.
+
+Vamos passar esses valores?
+
+No VS Code, vamos até o arquivo modal.component.html. O que precisamos passar? Para cada componente app-selector-passageiro, precisamos passar um atributo titulo e subtitulo. Para isso, podemos usar o atalho "Alt" e clique para posicionar o cursor em várias linhas de uma vez.
+
+Podemos pegar os títulos e subtítulos dos blocos comentados. O primeiro vai ser Adulto com subtítulo Acima de 12 anos entre parênteses. Para não precisar digitar novamente esses dados, basta recortar e colar.
+
+O segundo terá título Crianças e subtítulo Entre 2 e 11 anos entre parênteses. Por último, o título Bebês tem subtítulo Até 2 anos entre parênteses.
+
+modal.component.html:
+<div class="selecao-idade">
+    <app-seletor-passageiro titulo="Adultos" subtitulo="(Acima de 12 anos)"/>
+    <app-seletor-passageiro titulo="Crianças" subtitulo="(Entre 2 e 11 anos)"/>
+    <app-seletor-passageiro titulo="Bebês" subtitulo="(Até 2 anos)"/>
+
+    <!-- Código comentado omitido -->
+
+</div>
+COPIAR CÓDIGO
+Vamos salvar e conferir o resultado no navegador uma última vez. Após recarregar e abrir o modal, verificamos que recebemos os valores e exibimos as legendas corretamente.
+
+Próximos passos
+Para finalizar e ter um componente reaproveitável, seria interessante se entregássemos algo para passar um form control para a pessoa consumidora do seletor de passageiro.
+
+Queríamos passar um controle de formulário para que a pessoa controle a quantidade que aumenta e diminui. Pensando nesse cenário, o Angular entrega uma interface que podemos implementar de forma que o componente receba esse form control.
+
+É isso que vamos fazer no próximo vídeo!
+
+@@03
+Implementando o ControlValueAccessor
+
+No arquivo modal.component.html, já podemos remover o trecho comentado.
+Agora, precisamos passar esse formControl, pois queremos que o componente seja controlado por um formControl.
+
+Implementar ControlValueAccessor
+Para isso, vamos ao arquivo seletor-passageiro.component.ts. A classe que é responsável por definir esse comportamento que o Angular entrega é chamada ControlValueAccessor.
+
+Vamos pedir para a classe SeletorPassageiroComponent implementar esse ControlValueAcessor. Ao implementar essa interface, vamos conseguir receber esse formControl.
+
+Com isso, o ControleValueAccessor é importado automaticamente desde @angular/forms no início do documento.
+
+Vamos pedir para o VS Code nos ajudar a implementar a interface, usando o quick fix (ou atalho "Ctrl + .") e aceitar a sugestão "Implement interface 'ControlValueAccessor'".
+
+Com isso, a IDE entrega os quatro métodos que precisamos fazer. O único detalhe que vamos ajustar é trazer os inputs para o começo da classe, antes de implementar esses valores.
+
+seletor-passageiro.component.ts:
+import { Component, Input } from '@angular/core';
+import { ControlValueAccessor } from '@angular/forms';
+
+@Component({
+  selector: 'app-seletor-passageiro',
+  templateUrl: './seletor-passageiro.component.html',
+  styleUrls: ['./seletor-passageiro.component.scss'],
+})
+export class SeletorPassageiroComponent implements ControlValueAccessor 
+
+  @Input() titulo: string = ''
+  @Input() subtitulo: string = ''
+
+  writeValue(obj: any): void {
+    throw new Error('Method not implemented.');
+  }
+  registerOnChange(fn: any): void {
+    throw new Error('Method not implemented.');
+  }
+  registerOnTouched (fn: any): void {
+    throw new Error('Method not implemented.');
+  }
+  setDisabledState? (isDisabled: boolean): void {
+    throw new Error('Method not implemented.');
+  }
+}
+COPIAR CÓDIGO
+O método writeValue() é responsável por armazenar e escrever o valor do input. O registerOnChange() vai fazer o vínculo entre a alteração desse valor com o formulário dinâmico.
+
+Temos o mesmo para o registerOnTouched() e o setDisabledState?(). Ou seja, esses métodos precisam estar definidos para que o nosso FormGroup (formulário dinâmico) saiba que pode contar com esses métodos existentes.
+
+Com isso, já preparado. Podemos começar a fazer a implementação, porque atualmente todos os métodos fazem throw new Error() e nada iria funcionar.
+
+Após definir o @Input substitulo, vamos definir o value que será um número nesse cenário. Portanto, vamos tipá-lo como number e inicializá-lo com 0. Ou seja, inicialmente o nosso valor é zero.
+
+Depois de ter um number definido, podemos definir o onChange que vai receber uma função () => {} que vai fazer algo. Mas não vai fazer nada por enquanto.
+
+Faremos o mesmo para o onTouch: vai ser uma função que inicialmente não vai fazer nada.
+
+Por que fizemos isso? Porque o registerOnChange() vai armazenar a função fn: any que recebemos por parâmetro e vincular a essa função do onChange.
+
+Em registerOnChange(), digitamos this.onChange vai receber essa função fn que o FormGroup injeta.
+
+Similarmente, no registerOnTouched(), vamos registrar o this.onTouch vai receber a função fn que acabamos de receber como parâmetro.
+
+O objeto que o writeValue() recebe será o nosso valor. Por isso, substituímos obj por val. Vamos atribuir esse valor ao value local, ou seja, this.value recebe val.
+
+export class SeletorPassageiroComponent implements ControlValueAccessor {
+
+  @Input() titulo: string = ''
+  @Input() subtitulo: string = ''
+
+  value: number = 0
+  onChange = () => {}
+  onTouch = () => {}
+
+  writeValue(val: any): void {
+    this.value = val
+  }
+  registerOnChange(fn: any): void {
+    this.onChange = fn
+  }
+  registerOnTouched(fn: any): void {
+    this.onTouch = fn
+  }
+  setDisabledState?(isDisabled: boolean): void {
+    throw new Error('Method not implemented.');
+  }
+}
+COPIAR CÓDIGO
+Falta implementar somente uma maneira de alterar o valor conforme os cliques de incrementar e decrementar a quantidade de passageiros. Vamos fazê-lo no próximo vídeo.
+
+@@04
+Trabalhando com ControlValueAccessor
+
+Após notar que uma parte do formulário de pesquisa de passagens se repetia, a equipe decidiu transformar um contador de número de passageiros adultos, bebês e crianças em um componente personalizado reutilizável. Agora, é necessário que esse componente utilize a interface ControlValueAccessor.
+Qual o papel da interface ControlValueAccessor no componente Seletor Passageiros?
+
+A interface ControlValueAccessor é responsável por realizar a função de incrementar e decrementar o número de passageiros no componente de contador personalizado.
+ 
+Alternativa correta
+A interface ControlValueAccessor é responsável por armazenar o valor do contador de passageiros e garantir a persistência desse valor durante a interação com o formulário.
+ 
+A responsabilidade de armazenar o valor do contador de passageiros é do próprio componente personalizado, não da interface ControlValueAccessor.
+Alternativa correta
+A interface ControlValueAccessor é responsável por realizar a validação dos valores do contador de passageiros de acordo com as regras definidas no formulário.
+ 
+A validação dos valores do contador de passageiros é uma responsabilidade do formulário ou de outras validações definidas no componente, não da interface ControlValueAccessor.
+Alternativa correta
+A interface ControlValueAccessor é responsável por estabelecer a comunicação entre o componente de contador de passageiros e o formulário, permitindo a integração e interação corretas entre eles.
+ 
+A interface ControlValueAccessor é usada para permitir a integração do componente de contador de passageiros com o sistema de formulários do Angular, estabelecendo a comunicação bidirecional necessária para interagir com o formulário.
+
+@@05
+Para saber mais: ControlValueAccessor
+
+A classe ControlValueAccessor é uma interface do Angular que permite que um componente personalizado tenha uma comunicação bidirecional com o Angular Forms.
+Esta interface faz a interação com o formulário permitindo o uso das diretivas ngModel, formControl e formGroup. Ao implementar a interface ControlValueAccessor, um componente personalizado pode interagir com o estado e os valores dos controles de formulário do Angular.
+
+A interface ControlValueAccessor possui quatro métodos principais que devem ser implementados:
+
+writeValue(value: any): Este método é chamado pelo Angular Forms para atualizar o valor do componente personalizado com base no valor fornecido pelo formulário. O componente deve atualizar sua visualização e estado interno de acordo com o novo valor.
+registerOnChange(fn: any): Este método é usado para registrar uma função de retorno de chamada que será chamada pelo componente personalizado sempre que houver alterações em seu valor interno. O componente deve chamar essa função sempre que o valor for alterado para notificar o Angular Forms sobre as alterações.
+registerOnTouched(fn: any): Este método é usado para registrar uma função de retorno de chamada que será chamada pelo componente personalizado quando ele for tocado ou sofrer uma alteração no estado de foco. O componente deve chamar essa função sempre que ocorrer uma interação com ele, como um clique ou foco.
+setDisabledState(isDisabled: boolean): Este método é usado para definir o estado de desabilitado do componente personalizado com base no valor fornecido pelo formulário. O componente deve atualizar sua visualização e comportamento de acordo com o estado de desabilitado.
+Ao implementar a interface ControlValueAccessor, um componente personalizado se torna compatível com o sistema de formulários do Angular e pode ser usado de forma transparente, assim o componente pode receber valores do formulário, notificar o formulário sobre as alterações em seu valor interno e reagir a eventos como toque e alteração de foco.
+
+@@06
+Alterando o valor
+
+Agora, podemos focar em implementar as ações de incremento e decremento.
+Vamos abrir o HTML do componente chamado seletor-passageiro.component.html, onde já temos os botões separados em duas tags app-botao-controle. Um para decrementar (diminuir) e um para incrementar (aumentar) em 1.
+
+Dado o clique nesses botões, queremos executar um método. Por isso, no botão decrementar, vamos chamar o evento de clique (click) que vai ser igual ao método decrementar entre aspas.
+
+Além disso, vamos quebrar algumas linhas para organizar o HTML. Basta apertar "Enter" antes de operacao, também antes de (click) e, por fim, antes do fechamento da tag app-botao-controle. Assim, cada um fica em uma linha separada.
+
+Por último, vamos fazer as mesmas alterações para o botão de incremento. Isto é, no segundo app-botao-controle, vamos quebrar as linhas necessárias.
+
+Em seguida, logo após definir a operação que indica se aquele botão tem um ícone de - ou +, vamos chamar um (click) para que quando alguém clique, seja executado o método incrementar entre aspas.
+
+seletor-passageiro.component.html:
+<ul>
+    <li>
+        <strong>{{ titulo }}</strong>
+    </li>
+    <li>{{ subtitulo }}</li>
+    <li>
+        <app-botao-controle 
+            operacao="decrementar" 
+            (click)="decrementar"
+        >
+        </app-botao-controle>
+        <span>1</span>
+        <app-botao-controle 
+            operacao="incrementar"
+            (click)="incrementar"
+        >
+        </app-botao-controle>
+    </li>
+</ul>
+COPIAR CÓDIGO
+Porém, como o próprio VS Code indica, esses métodos incrementar() e decrementar() ainda não existem. Vamos criá-los em seletor-passageiro.component.ts.
+
+Após setDisabledState?(), vamos definir uma função chamada incrementar() e outra chamada decrementar(). Com isso, o arquivo HTML já para de apontar um erro, pois agora os métodos existem.
+
+O que queremos fazer quando alguém clicar em incrementar? Queremos pegar o this.value e aumentar 1, ou seja, += 1. Assim, pegamos o valor que já temos e incrementamos 1.
+
+Além disso, temos que avisar para quem está ouvindo, que esse valor mudou. Para isso, devemos evocar a função que registramos. Basta digitarthis.onChange(), passando o this.value.
+
+Dessa maneira, quem olha e ouve esse clique, vai receber esse novo valor.
+
+O TypeScript aponta que o onChange() não espera nenhum argumento, mas passando um. Podemos consertar esse erro ao passar o parâmetro val do tipo number na definição do onChange.
+
+Por último, devemos dizer que esse controle foi tocado e alterado. Por isso, chamamos a função this.onTouch() em incrementar(). Com isso, fizemos o incremento do valor.
+
+Agora, precisamos fazer o mesmo para decrementar(). Basta copiar as linhas 32 a 34 que são o corpo da função incrementar() e colar dentro do método decrementar().
+
+Porém, teremos uma pequena diferença: só queremos decrementar se o valor for atualmente maior do que zero. Pois, não queremos números negativos.
+
+Por isso, acrescentamos um if() e as três linhas copiadas para dentro desse loop. Em seguida, vamos alterar o this.value para decrementar. Ou seja, this.value -= 1.
+
+Qual a condição do if? Se this.value > 0. Se for maior do que zero, podemos decrementar. Se for zero, não vamos alterar o valor, pois os passageiros não podem ser negativos.
+
+seletor-passageiro.component.ts:
+export class SeletorPassageiroComponent implements ControlValueAccessor {
+
+  @Input() titulo: string = ''
+  @Input() subtitulo: string = ''
+
+  value: number = 0
+  onChange = (val: number) => {}
+  onTouch = () => {}
+
+  // código omitido…
+
+  incrementar () {
+    this.value += 1
+    this.onChange(this.value)
+    this.onTouch()
+  }
+
+  decrementar () {
+    if (this.value > 0) {
+      this.value -= 1
+      this.onChange(this.value)
+      this.onTouch()
+    }
+  }
+
+}
+COPIAR CÓDIGO
+Com isso, já conseguimos implementar a interface. Agora, precisamos passar esse controle que temos no serviço de formulário e conectar essas peças que, por enquanto, ainda estão desconectadas. Até o próximo vídeo!
+
+@@08
+Desafio: últimos detalhes
+
+Chegou a sua hora da aventura, última temporada! Pra gente ajustar os detalhes finais da última milha da nossa jornada!
+Vamo de checklist:
+
+limitar o tamanho do nosso dropdown-uf em 230px
+ajustar a exibição da quantidade de passageiros
+ajustar a exibição do tipo de passagem
+alternar os valores de origem e destino
+Coda daí que eu codo de cá e deixo o gabarito pra ti, se precisar dar aquele espiadinha.
+
+Bora de código?
+Pra limitar a largura do nosso auto-complete de Unidade Federativa eu fiz assim:
+
+/* src/app/shared/form-busca/dropdown-uf/dropdown-uf.component.scss */
+.mat-mdc-form-field {
+    max-width: 230px;
+}
+COPIAR CÓDIGO
+Pra ajustar os dados de passagem e passageiros nos chips, assim:
+
+      <mat-chip (click)="formBuscaService.openDialog()">
+        <div class="inner">
+          <mat-icon>check</mat-icon> {{formBuscaService.getDescricaoPassageiros()}}
+        </div>
+      </mat-chip>
+      <mat-chip (click)="formBuscaService.openDialog()">
+        <div class="inner">
+          <mat-icon>check</mat-icon> {{formBuscaService.obterControle('tipo').value}}
+        </div>
+      </mat-chip>
+COPIAR CÓDIGO
+E, por ultimo, pra alterarmos origem e destino:
+
+  // src/app/core/services/form-busca.service.ts
+  
+  trocarOrigemDestino(): void {
+    const origem = this.formBusca.get('origem')?.value;
+    const destino = this.formBusca.get('destino')?.value;
+  
+    this.formBusca.patchValue({
+      origem: destino,
+      destino: origem
+    });
+  }
+COPIAR CÓDIGO
+E, no click do botão:
+
+      <button mat-icon-button (click)="formBuscaService.trocarOrigemDestino()" >
+        <mat-icon>sync_alt</mat-icon>
+      </button>
+
+@@09
+Projeto final do curso
+
+Caso queira revisar o código do projeto final do curso, você pode baixá-lo neste link ou acessar nosso repositório do Github.
+
+https://github.com/alura-cursos/jornada/archive/refs/heads/aula-5.zip
+
+https://github.com/alura-cursos/jornada/tree/aula-5
+
+@@10
+O que aprendemos?
+
+Nessa aula, você aprendeu como:
+Componentizar o seletor de passageiros;
+Implementar o ControlValueAccessor;
+Criar funções de incrementar e decrementar;
+Integrar componente personalizado ao Angular Forms.
+
+@@11
+Parabéns!
+
+Fala, Jedi! Você concluiu! 🎉
+https://media.tenor.com/udYl1CJgloUAAAAd/yoda-star-wars.gif
+
+Primeiramente, parabéns por ter concluído nosso épico curso de Angular! A dedicação e o esforço que você demonstrou ao longo desta jornada são dignos de um verdadeiro mestre Jedi.
+
+Seu empenho nos módulos nos mostrou que você realmente mergulhou no mundo do Angular, e agora, você não só conhece o "Caminho", como também sabe caminhar por ele.
+
+Nos primeiros passos, vimos como criar o primeiro serviço e manipular as variáveis de ambiente. Você se acostumou com o Observable, e explorou com muita sagacidade os segredos de 'provideIn'.
+
+Depois, nos aprofundamos em design patterns, o coração da arquitetura do software. Você agora entende como o Angular se encaixa nisso e sabe que um bom design pattern pode fazer a diferença entre o lado sombrio e o lado da luz.
+
+A jornada continuou, e você mergulhou no poderoso TypeScript, e provou ser um verdadeiro domador de serviços com o módulo de Unidades Federativas. E não posso deixar de mencionar o quão impressionante foi ver você manuseando o shareReplay para criar cache, assim como um Jedi manuseia seu sabre de luz.
+
+E, claro, nos módulos finais, você construiu uma compreensão profunda dos controles de formulários, trabalhando com inputs dinâmicos e até mesmo criando uma descrição detalhada dos passageiros com o auxílio do ControlValueAccessor. Aprendemos a implementar e controlar nossos próprios componentes, e você, como um verdadeiro mestre, seguiu a jornada até o fim.
+
+Agora, como um Jedi completo, você tem o conhecimento e a experiência para construir e controlar aplicativos Angular poderosos. Mas lembre-se, um verdadeiro Jedi está sempre aprendendo, sempre buscando conhecimento. Este é o caminho.
+
+Por fim, lembre-se: A Força estará com você, sempre! 🌟
+
+Continue aprendendo, continue crescendo e, acima de tudo, continue compartilhando seu conhecimento. Parabéns novamente, Jedi! Nos vemos na próxima aventura! 🚀
+
+Até a próxima Vinny
+
+@@12
+Conclusão
+
+Estamos muito felizes de comemorar com você mais essa vitória: mais um curso de Angular para a sua prateleira de diplomas!
+O que aprendemos?
+Qual foi a nossa jornada de aprendizado? Começamos dando os primeiros passos em serviços e entende o escopo do serviço. Passamos por padrão de projetos, entendendo o que é o Singleton.
+
+Também evoluímos nossa aplicação. A Jornada Milhas ainda não tinha comportamentos, somente a camada visual. Por isso, tivemos que refatorar e escrever novas funcionalidades.
+
+Tivemos que decidir como controlar o estado da aplicação, portanto, criamos mais um serviço para fazer o controle do formulário. Ele ficou responsável por instanciar o grupo de formulário que usamos e definir os controles. Quem precisava ter acesso, simplesmente chamava o serviço e fazia o que precisava.
+
+Além disso, conseguimos trabalhar com a camada de cache na hora de obter os estados e também concluímos o componente que implementa um form control. Ou seja, o componente que criamos do zero permite que a pessoa usuária ou desenvolvedora que for consumi-lo, passe para ele um form control e a quantidade de passageiros que diminui ou aumenta vai estar disponível dentro daquele controle.
+
+Precisamos implementar muitas funcionalidades interessantes. Nesse curso, passamos pela experiência de vida real de uma pessoa desenvolvedora, ou seja, pegamos uma aplicação que não começamos, com apenas um Figma e um sonho, e implementamos as funcionalidades de acordo com o que precisávamos fazer.
+
+Esperamos que você tenha se divertido e até a próxima!
